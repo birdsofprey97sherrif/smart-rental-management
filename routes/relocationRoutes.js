@@ -1,0 +1,43 @@
+const express = require("express");
+const router = express.Router();
+
+const {
+  requestRelocation,
+  getMyRelocationRequests,
+  getRelocationRequests,
+  getAllRelocationRequests,
+  updateRelocationStatus,
+  assignDriver,
+  rateRelocation
+} = require("../controllers/relocationController");
+
+const { getUserNotifications, markAsSeen } = require("../controllers/notificationController");
+const { protectRoute } = require("../middlewares/authMiddleware");
+const { isTenant, isAdminOrCaretaker } = require("../middlewares/roleMiddleware");
+
+// Tenant requests relocation
+router.post("/request", protectRoute, isTenant, requestRelocation);
+
+// Tenant views their relocation requests
+router.get("/mine", protectRoute, isTenant, getMyRelocationRequests);
+
+// Public or general relocation requests (if needed)
+router.get("/", getRelocationRequests);
+
+// Admin or caretaker views all relocation requests
+router.get("/all", protectRoute, isAdminOrCaretaker, getAllRelocationRequests);
+
+// Admin or caretaker updates relocation status
+router.patch("/update/:requestId", protectRoute, isAdminOrCaretaker, updateRelocationStatus);
+
+// Assign driver to relocation (admin/caretaker)
+router.patch("/assign-driver", protectRoute, isAdminOrCaretaker, assignDriver);
+
+// Tenant rates relocation
+router.post("/rate", protectRoute, isTenant, rateRelocation);
+
+// Notifications related to relocation
+router.get("/notifications", protectRoute, getUserNotifications);
+router.patch("/notifications/mark-seen", protectRoute, markAsSeen);
+
+module.exports = router;
