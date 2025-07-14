@@ -3,7 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const { protectRoute } = require("./middlewares/authMiddleware");
-
+const cors = require("cors");
 // Load environment variables
 dotenv.config();
 
@@ -19,7 +19,7 @@ const app = express();
 
 // Body parser
 app.use(express.json());
-
+app.use(cors());
 // Static files
 app.use("/uploads", express.static("uploads"));
 
