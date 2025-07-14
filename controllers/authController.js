@@ -56,12 +56,12 @@ exports.register = async (req, res) => {
 
     const verifyLink = `${process.env.FRONTEND_URL}/verify-account/${verifyToken}`;
     const msg = `Hi ${fullName},\n\nPlease verify your account:\n${verifyLink}\n\nThis link expires in 15 minutes.`;
-    await sendEmail({ to: email, subject: "Verify Your Account", text: msg });
+    // await sendEmail({ to: email, subject: "Verify Your Account", text: msg });
 
     res.status(201).json({ message: "Account created. Please check your email to verify." });
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ message: "Server error during registration" });
+   res.status(500).json({ message: "Server error during registration", error: err.message });
   }
 };
 
