@@ -54,9 +54,9 @@ exports.register = async (req, res) => {
 
     await newUser.save();
 
-    const verifyLink = `${process.env.FRONTEND_URL}/verify-account/${verifyToken}`;
-    const msg = `Hi ${fullName},\n\nPlease verify your account:\n${verifyLink}\n\nThis link expires in 15 minutes.`;
-    await sendEmail({ to: email, subject: "Verify Your Account", text: msg });
+    // const verifyLink = `${process.env.FRONTEND_URL}/verify-account/${verifyToken}`;
+    // const msg = `Hi ${fullName},\n\nPlease verify your account:\n${verifyLink}\n\nThis link expires in 15 minutes.`;
+    // await sendEmail({ to: email, subject: "Verify Your Account", text: msg });
 
     res.status(201).json({ message: "Account created. Please check your email to verify." });
   } catch (err) {
