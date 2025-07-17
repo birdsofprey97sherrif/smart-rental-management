@@ -1,23 +1,30 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User"); // Make sure to import your User model
+const User = require("../models/User");
 
+// Middleware to protect routes (checks token + suspension + user existence)
 exports.protectRoute = async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
-  if (!token) return res.status(401).json({ message: "Access denied" });
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer "))
+    return res.status(401).json({ message: "Access denied: No token" });
+
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // Optionally fetch user from DB for up-to-date info
+
     const user = await User.findById(decoded.userId);
     if (!user) return res.status(401).json({ message: "User not found" });
     if (user.isSuspended) {
       return res.status(403).json({ message: "Account suspended by admin" });
     }
+
     req.user = {
       userId: user._id.toString(),
       role: user.role,
-      // Add more fields if needed
+      // You can add more fields here if needed
     };
+
     req.isAdmin = user.role === "admin";
     next();
   } catch (err) {
@@ -25,6 +32,7 @@ exports.protectRoute = async (req, res, next) => {
   }
 };
 
+// Role-based access control middleware
 exports.allowRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
@@ -34,11 +42,13 @@ exports.allowRoles = (...allowedRoles) => {
   };
 };
 
-// Example toggleSuspend controller (should be in userController.js, not here)
-exports.toggleSuspend = async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user) return res.status(404).json({ message: "User not found" });
-  user.isSuspended = !user.isSuspended;
-  await user.save();
-  res.json({ message: `User is now ${user.isSuspended ? "suspended" : "active"}` });
+// Simple isAdmin middleware for quick checks
+exports.isAdmin = (req, res, next) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied: Admins only" });
+  }
+  next();
 };
+
+// Optional fallback: backward-compatible alias for protectRoute
+exports.isAuthenticated = exports.protectRoute;

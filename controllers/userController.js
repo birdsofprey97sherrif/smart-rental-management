@@ -1,5 +1,39 @@
 const User = require("../models/User");
 
+// Get Profile
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "-password -resetToken -resetTokenExpiry"
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load user profile" });
+  }
+};
+
+// Update Profile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { fullName, email, phone } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { fullName, email, phone },
+      { new: true, runValidators: true }
+    ).select("-password -resetToken -resetTokenExpiry");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update user profile" });
+  }
+};
+
+// Deactivate or Reactivate Account
 exports.toggleAccountDeactivation = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -18,14 +52,19 @@ exports.toggleAccountDeactivation = async (req, res) => {
   }
 };
 
-exports.getUserProfile = async (req, res) => {
+// Admin Suspend/Unsuspend
+exports.toggleSuspend = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const user = await User.findById(userId).select("-password -resetToken -resetTokenExpiry");
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json(user);
+    user.isSuspended = !user.isSuspended;
+    await user.save();
+
+    res.json({
+      message: `User is now ${user.isSuspended ? "suspended" : "active"}`,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Failed to load user profile" });
+    res.status(500).json({ message: "Failed to update user suspension" });
   }
 };
