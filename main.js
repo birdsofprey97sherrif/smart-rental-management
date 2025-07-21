@@ -30,6 +30,12 @@ const userRoutes = require("./routes/userRoutes");
 const houseRoutes = require("./routes/houseRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const visitRoutes = require("./routes/visitRoutes");
+const agreementRoutes = require("./routes/agreementRoutes");
+const adminRoutes = require("./routes/adminRoutes"); // Ensure adminRoutes is defined and exported
+const maintenanceRoutes = require("./routes/maintenanceRoutes"); // Ensure maintenanceRoutes is defined and exported
+const rentRoutes = require("./routes/rentRoutes"); // Ensure rentRoutes is defined and exported
+const relocationRoutes = require("./routes/relocationRoutes"); // Ensure relocationRoutes is defined and exported
+const defaulterRoutes = require("./routes/defaulterRoutes"); // Ensure defaulterRoutes is defined and exported
 
 // Route mounting
 app.get("/", (req, res) => res.send("API is running"));
@@ -39,6 +45,12 @@ app.use("/api/users", protectRoute, userRoutes); // protected
 app.use("/api/houses", protectRoute, houseRoutes); // protected
 app.use("/api/messages", protectRoute, messageRoutes); // protected
 app.use("/api/visits", protectRoute, visitRoutes); // protected
+app.use("/api/agreements", agreementRoutes); // protected
+app.use("/api/maintenance", protectRoute, maintenanceRoutes); // protected
+app.use("/api/rents", protectRoute, rentRoutes); // protected
+app.use("/api/relocations", protectRoute, relocationRoutes); // protected
+app.use("/api/defaulters", protectRoute, defaulterRoutes); // protected
+app.use("/api/admin", protectRoute, adminRoutes); // protected
 
 // Optional: Error handling middleware
 // app.use((err, req, res, next) => {

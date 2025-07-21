@@ -6,8 +6,8 @@ const maintenanceSchema = new mongoose.Schema({
   issue: { type: String, required: true },
   status: { type: String, enum: ["pending", "in-progress", "resolved"], default: "pending" },
   // Optional: add more fields if needed
-  // description: { type: String },
-  // priority: { type: String, enum: ["low", "medium", "high"], default: "medium" }
+  description: { type: String },
+  priority: { type: String, enum: ["low", "medium", "high"], default: "medium" }
 }, { timestamps: true });
 
 module.exports = mongoose.model("MaintenanceRequest", maintenanceSchema);
