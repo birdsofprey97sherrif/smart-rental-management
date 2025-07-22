@@ -11,6 +11,5 @@ const { isLandlord } = require("../middlewares/roleMiddleware");
 
 router.get("/rent-defaulters", protectRoute, isLandlord, getDefaulters);
 router.get("/send-defaulter-sms", protectRoute, isLandlord, sendDefaulterReminders);
-router.get("/defaulter-list", protectRoute, isLandlord, getDefaulterList);
 
 module.exports = router;

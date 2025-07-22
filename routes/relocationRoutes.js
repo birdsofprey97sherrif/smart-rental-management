@@ -4,11 +4,11 @@ const router = express.Router();
 const {
   requestRelocation,
   getMyRelocationRequests,
-  getRelocationRequests,
+  getRelocationRequestById,
   getAllRelocationRequests,
   updateRelocationStatus,
   assignDriver,
-  rateRelocation
+  rateRelocation,
 } = require("../controllers/relocationController");
 
 const { getUserNotifications, markAsSeen } = require("../controllers/notificationController");
@@ -21,8 +21,8 @@ router.post("/request", protectRoute, isTenant, requestRelocation);
 // Tenant views their relocation requests
 router.get("/mine", protectRoute, isTenant, getMyRelocationRequests);
 
-// Public or general relocation requests (if needed)
-router.get("/", getRelocationRequests);
+// admin or caretaker views relocation requests by id
+router.get("/requests/:id", protectRoute, isAdminOrCaretaker,getRelocationRequestById);
 
 // Admin or caretaker views all relocation requests
 router.get("/all", protectRoute, isAdminOrCaretaker, getAllRelocationRequests);

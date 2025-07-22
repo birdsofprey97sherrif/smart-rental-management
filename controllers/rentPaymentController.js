@@ -2,7 +2,10 @@ const RentPayment = require("../models/RentPayment");
 const RentalAgreement = require("../models/RentalAgreement");
 const House = require("../models/House");
 const User = require("../models/User");
-const { generateReceiptPDF, generateRentHistoryPDF } = require("../utils/pdfReceipt");
+const {
+  generateReceiptPDF,
+  generateRentHistoryPDF,
+} = require("../utils/pdfReceipt");
 const { sendEmail } = require("../utils/mailer");
 
 // Tenant pays rent
@@ -12,12 +15,18 @@ exports.payRent = async (req, res) => {
     const tenantId = req.user.userId;
 
     if (!agreementId || !amountPaid || !paymentMethod) {
-      return res.status(400).json({ message: "agreementId, amountPaid, and paymentMethod are required" });
+      return res
+        .status(400)
+        .json({
+          message: "agreementId, amountPaid, and paymentMethod are required",
+        });
     }
 
     const agreement = await RentalAgreement.findById(agreementId);
     if (!agreement || agreement.tenantId.toString() !== tenantId) {
-      return res.status(403).json({ message: "Unauthorized or agreement not found" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized or agreement not found" });
     }
 
     const payment = new RentPayment({
@@ -26,19 +35,18 @@ exports.payRent = async (req, res) => {
       houseId: agreement.houseId,
       amountPaid,
       paymentMethod,
-      receiptId: `RNT-${Date.now()}`
+      receiptId: `RNT-${Date.now()}`,
     });
 
     await payment.save();
     res.status(201).json({ message: "Rent paid successfully", payment });
-
   } catch (err) {
     res.status(500).json({ message: "Failed to process payment" });
   }
 };
 
 // Get all rent payments for the logged-in tenant
-exports.getMyRentPayments = async (req, res) => {
+exports.getTenantPayments = async (req, res) => {
   try {
     const tenantId = req.user.userId;
     const payments = await RentPayment.find({ tenantId })
@@ -70,9 +78,11 @@ exports.getLandlordPayments = async (req, res) => {
   try {
     const landlordId = req.user.userId;
     const agreements = await RentalAgreement.find({ landlordId });
-    const agreementIds = agreements.map(ag => ag._id);
+    const agreementIds = agreements.map((ag) => ag._id);
 
-    const payments = await RentPayment.find({ agreementId: { $in: agreementIds } })
+    const payments = await RentPayment.find({
+      agreementId: { $in: agreementIds },
+    })
       .populate("tenantId", "fullName email phone")
       .populate("houseId", "title location")
       .populate("agreementId", "leaseStart leaseEnd monthlyRent");
@@ -88,12 +98,16 @@ exports.getCaretakerPayments = async (req, res) => {
   try {
     const caretakerId = req.user.userId;
     const houses = await House.find({ caretakerId });
-    const houseIds = houses.map(h => h._id);
+    const houseIds = houses.map((h) => h._id);
 
-    const agreements = await RentalAgreement.find({ houseId: { $in: houseIds } });
-    const agreementIds = agreements.map(ag => ag._id);
+    const agreements = await RentalAgreement.find({
+      houseId: { $in: houseIds },
+    });
+    const agreementIds = agreements.map((ag) => ag._id);
 
-    const payments = await RentPayment.find({ agreementId: { $in: agreementIds } })
+    const payments = await RentPayment.find({
+      agreementId: { $in: agreementIds },
+    })
       .populate("tenantId", "fullName email phone")
       .populate("houseId", "title location")
       .populate("agreementId", "leaseStart leaseEnd monthlyRent");
@@ -112,7 +126,9 @@ exports.downloadReceipt = async (req, res) => {
 
     const payment = await RentPayment.findById(paymentId);
     if (!payment || payment.tenantId.toString() !== tenantId) {
-      return res.status(404).json({ message: "Receipt not found or unauthorized" });
+      return res
+        .status(404)
+        .json({ message: "Receipt not found or unauthorized" });
     }
 
     const tenant = await User.findById(tenantId);
@@ -132,7 +148,9 @@ exports.sendReceiptEmail = async (req, res) => {
 
     const payment = await RentPayment.findById(paymentId);
     if (!payment || payment.tenantId.toString() !== tenantId) {
-      return res.status(404).json({ message: "Receipt not found or unauthorized" });
+      return res
+        .status(404)
+        .json({ message: "Receipt not found or unauthorized" });
     }
 
     const tenant = await User.findById(tenantId);
@@ -161,7 +179,9 @@ exports.sendReceiptEmail = async (req, res) => {
 exports.downloadRentHistory = async (req, res) => {
   try {
     const tenantId = req.user.userId;
-    const payments = await RentPayment.find({ tenantId }).sort({ paymentDate: 1 });
+    const payments = await RentPayment.find({ tenantId }).sort({
+      paymentDate: 1,
+    });
     const tenant = await User.findById(tenantId);
 
     await generateRentHistoryPDF(payments, tenant, res);
@@ -175,13 +195,18 @@ exports.getLandlordEarningsSummary = async (req, res) => {
   try {
     const landlordId = req.user.userId;
     const agreements = await RentalAgreement.find({ landlordId });
-    const agreementIds = agreements.map(ag => ag._id);
+    const agreementIds = agreements.map((ag) => ag._id);
 
-    const payments = await RentPayment.find({ agreementId: { $in: agreementIds } });
+    const payments = await RentPayment.find({
+      agreementId: { $in: agreementIds },
+    });
 
     const summary = {};
     for (const pay of payments) {
-      const month = new Date(pay.paymentDate).toLocaleString('default', { month: 'short', year: 'numeric' });
+      const month = new Date(pay.paymentDate).toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      });
       if (!summary[month]) summary[month] = 0;
       summary[month] += pay.amountPaid;
     }
@@ -197,16 +222,23 @@ exports.getCaretakerEarningsSummary = async (req, res) => {
   try {
     const caretakerId = req.user.userId;
     const houses = await House.find({ caretakerId });
-    const houseIds = houses.map(h => h._id);
+    const houseIds = houses.map((h) => h._id);
 
-    const agreements = await RentalAgreement.find({ houseId: { $in: houseIds } });
-    const agreementIds = agreements.map(ag => ag._id);
+    const agreements = await RentalAgreement.find({
+      houseId: { $in: houseIds },
+    });
+    const agreementIds = agreements.map((ag) => ag._id);
 
-    const payments = await RentPayment.find({ agreementId: { $in: agreementIds } });
+    const payments = await RentPayment.find({
+      agreementId: { $in: agreementIds },
+    });
 
     const summary = {};
     for (const pay of payments) {
-      const month = new Date(pay.paymentDate).toLocaleString('default', { month: 'short', year: 'numeric' });
+      const month = new Date(pay.paymentDate).toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      });
       if (!summary[month]) summary[month] = 0;
       summary[month] += pay.amountPaid;
     }

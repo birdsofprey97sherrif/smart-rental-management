@@ -2,7 +2,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const { protectRoute } = require("./middlewares/authMiddleware"); // renamed to match your final merged middleware
 
 // Load environment variables
 dotenv.config();
@@ -20,46 +19,49 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => {
-    console.error(" MongoDB connection error:", err.message);
+    console.error("MongoDB connection error:", err.message);
     process.exit(1);
   });
 
-// Routes
+// Route Imports
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const houseRoutes = require("./routes/houseRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const visitRoutes = require("./routes/visitRoutes");
-const agreementRoutes = require("./routes/agreementRoutes");
-const adminRoutes = require("./routes/adminRoutes"); // Ensure adminRoutes is defined and exported
-const maintenanceRoutes = require("./routes/maintenanceRoutes"); // Ensure maintenanceRoutes is defined and exported
-const rentRoutes = require("./routes/rentRoutes"); // Ensure rentRoutes is defined and exported
-const relocationRoutes = require("./routes/relocationRoutes"); // Ensure relocationRoutes is defined and exported
-const defaulterRoutes = require("./routes/defaulterRoutes"); // Ensure defaulterRoutes is defined and exported
+const rentAgreementRoutes = require("./routes/rentAgreementRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const MaintenanceRoute = require("./routes/MaintenanceRoute");
+const rentRoute = require("./routes/rentPaymentRoutes");
+const relocationRoutes = require("./routes/relocationRoutes");
+const defaulterRoutes = require("./routes/defaulterRoutes");
 
-// Route mounting
+// Route Mounting
 app.get("/", (req, res) => res.send("API is running"));
 
-app.use("/api/auth", authRoutes); // public
-app.use("/api/users", protectRoute, userRoutes); // protected
-app.use("/api/houses", protectRoute, houseRoutes); // protected
-app.use("/api/messages", protectRoute, messageRoutes); // protected
-app.use("/api/visits", protectRoute, visitRoutes); // protected
-app.use("/api/agreements", agreementRoutes); // protected
-app.use("/api/maintenance", protectRoute, maintenanceRoutes); // protected
-app.use("/api/rents", protectRoute, rentRoutes); // protected
-app.use("/api/relocations", protectRoute, relocationRoutes); // protected
-app.use("/api/defaulters", protectRoute, defaulterRoutes); // protected
-app.use("/api/admin", protectRoute, adminRoutes); // protected
+// Public Routes
+app.use("/api/auth", authRoutes);
 
-// Optional: Error handling middleware
+// Protected Routes (middleware applied per route inside)
+app.use("/api/users", userRoutes);
+app.use("/api/houses", houseRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/visits", visitRoutes);
+app.use("/api/rental-agreements", rentAgreementRoutes);
+app.use("/api/maintenance", MaintenanceRoute);
+app.use("/api/rents", rentRoute);
+app.use("/api/relocations", relocationRoutes);
+app.use("/api/defaulters", defaulterRoutes);
+app.use("/api/admin", adminRoutes);
+
+// Optional Global Error Handler
 // app.use((err, req, res, next) => {
 //   console.error(err.stack);
 //   res.status(500).json({ message: "Something went wrong!" });
 // });
 
-// Start server
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

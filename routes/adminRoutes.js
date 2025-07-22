@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { protectRoute } = require("../middlewares/authMiddleware");
-const { isAdmin, allowRoles } = require("../middlewares/roleMiddleware");
+const { isAdmin } = require("../middlewares/roleMiddleware");
 
 const { 
   getHouseReport, 
