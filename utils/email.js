@@ -2,23 +2,29 @@ const nodemailer = require("nodemailer");
 
 exports.sendEmail = async ({ to, subject, text, html }) => {
   try {
+    const testAccount = await nodemailer.createTestAccount();
+
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.ethereal.email",
+      port: 587,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
     });
 
-    await transporter.sendMail({
-      from: `"Smart Rentals" <${process.env.EMAIL_USER}>`,
+    const info = await transporter.sendMail({
+      from: `"Smart Rentals" <${testAccount.user}>`,
       to,
       subject,
       text,
-      html
+      html,
     });
+
+    console.log("✅ Email sent!");
+    console.log("📬 Preview URL:", nodemailer.getTestMessageUrl(info));
   } catch (error) {
-    console.error("Email send error:", error);
+    console.error("❌ Email send error:", error);
     throw new Error("Failed to send email");
   }
 };
