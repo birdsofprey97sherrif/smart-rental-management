@@ -38,3 +38,11 @@ exports.getRelocationRequests = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch relocation requests", details: error.message });
   }
 };
+
+exports.getAnalytisTrends = async (req, res) => {
+  try {
+    res.status(200).json({ message: "Trends fetched successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch analytics trends", details: error.message });
+  }
+};

@@ -4,32 +4,34 @@ const router = express.Router();
 const { protectRoute } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/roleMiddleware");
 
-const { 
-  getHouseReport, 
-  getEstateReport 
+const {
+  getHouseReport,
+  getEstateReport
 } = require("../controllers/adminReportController");
 
-const { 
-  registerStaff, 
-  toggleUserSuspension, 
-  getStaffList, 
-  sendMassNotification 
+const {
+  registerStaff,
+  toggleUserSuspension,
+  getStaffList,
+  sendMassNotification,
+  getUserProfile,
+  editUserProfile
 } = require("../controllers/adminController");
 
-const { 
-  getDefaulters, 
-  notifyDefaulters 
+const {
+  getDefaulters,
+  notifyDefaulters
 } = require("../controllers/defaulterController");
 
-const { getSystemStats } = require("../controllers/adminAnalyticsController");
+const { getSystemStats, getRelocationRequests, getAnalytisTrends } = require("../controllers/adminAnalyticsController");
 
-const { 
-  logAction, 
-  getAuditLogs, 
-  clearAuditLogs, 
-  getAuditLogById, 
-  getAuditLogsByUser, 
-  getAuditLogsByAction 
+const {
+  logAction,
+  getAuditLogs,
+  clearAuditLogs,
+  getAuditLogById,
+  getAuditLogsByUser,
+  getAuditLogsByAction
 } = require("../utils/audit");
 
 // Reports
@@ -40,6 +42,8 @@ router.get("/report/estate/:estate", protectRoute, isAdmin, getEstateReport);
 router.post("/register-staff", protectRoute, isAdmin, registerStaff);
 router.patch("/suspend-user/:id", protectRoute, isAdmin, toggleUserSuspension);
 router.get("/staff", protectRoute, isAdmin, getStaffList);
+router.get("/profile", protectRoute, isAdmin, getUserProfile);
+router.put("/profile", protectRoute, isAdmin, editUserProfile);
 
 // Mass notification
 router.post("/admin/mass-notify", protectRoute, isAdmin, sendMassNotification);
@@ -50,7 +54,8 @@ router.post("/defaulters/notify", protectRoute, isAdmin, notifyDefaulters);
 
 // Analytics
 router.get("/admin/analytics", protectRoute, isAdmin, getSystemStats);
-
+router.get("/admin/relocation-requests", protectRoute, isAdmin, getRelocationRequests);
+router.get("/admin/analytics/trends", protectRoute, isAdmin, getAnalytisTrends);
 // Audit logs
 router.get("/admin/audit-logs", protectRoute, isAdmin, getAuditLogs);
 router.post("/admin/audit-logs", protectRoute, isAdmin, async (req, res) => {
