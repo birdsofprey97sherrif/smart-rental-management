@@ -13,10 +13,10 @@ exports.getSystemStats = async (req, res) => {
       totalRelocations,
     ] = await Promise.all([
       User.countDocuments(),
-      User.countDocuments({ roles: "tenant" }),
-      User.countDocuments({ roles: "landlord" }),
-      User.countDocuments({ roles: "caretaker" }),
-      House.countDocuments(),
+      User.countDocuments({ role: { $regex: /^tenant$/i } }),
+    User.countDocuments({ role: { $regex: /^landlord$/i } }),
+    User.countDocuments({ role: { $regex: /^caretaker$/i } }),
+    House.countDocuments(),
       Relocation.countDocuments(),
     ]);
 
