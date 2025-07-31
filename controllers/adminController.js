@@ -8,6 +8,10 @@ exports.registerStaff = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     if (!["landlord", "caretaker", "admin"].includes(role)) {
       return res.status(400).json({ message: "Invalid staff role" });
     }
@@ -20,6 +24,7 @@ exports.registerStaff = async (req, res) => {
 
     res.status(201).json({ message: `${role} registered`, user: newUser });
   } catch (err) {
+    console.error('Register Staff Error:', err);
     res.status(500).json({ message: "Failed to register staff" });
   }
 };
