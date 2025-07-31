@@ -74,10 +74,10 @@ exports.getUserProfile = async (req, res) => {
 // Edit user profile
 exports.editUserProfile = async (req, res) => {
   try {
-    const { name, role, notificationPrefs } = req.body;
+    const { fullName, phone, role, suspended  } = req.body;
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name, role, notificationPrefs },
+      { fullName, phone, role, suspended  },
       { new: true }
     );
     if (!user) return res.status(404).json({ message: "User not found" });
