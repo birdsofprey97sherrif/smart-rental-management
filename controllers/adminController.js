@@ -20,7 +20,7 @@ exports.registerStaff = async (req, res) => {
 
     res.status(201).json({ message: `${role} registered`, user: newUser });
   } catch (err) {
-    console.error('Error registering staff', err);
+    console.error('registerStaff', err);
     res.status(500).json({ message: "Failed to register staff" });
   }
 };
