@@ -32,7 +32,10 @@ exports.getStaffList = async (req, res) => {
       .select("-password -__v")
       .sort({ createdAt: -1 });
 
-    res.json(staff);
+    const totalPages = 1; // Later calculate based on query & total count
+    const currentPage = 1;
+
+    res.json({ staff, totalPages, currentPage });
   } catch (err) {
     res.status(500).json({ message: "Failed to load staff list" });
   }
