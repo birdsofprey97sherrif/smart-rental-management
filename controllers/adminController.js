@@ -6,7 +6,7 @@ const { sendSMS } = require("../utils/sms");
 // Register staff
 exports.registerStaff = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, phone, password, role } = req.body;
 
     if (!["landlord", "caretaker", "admin"].includes(role)) {
       return res.status(400).json({ message: "Invalid staff role" });
@@ -16,10 +16,11 @@ exports.registerStaff = async (req, res) => {
     if (existing) return res.status(400).json({ message: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ name, email, password: hashedPassword, role });
+    const newUser = await User.create({ name, email, phone, password: hashedPassword, role });
 
     res.status(201).json({ message: `${role} registered`, user: newUser });
   } catch (err) {
+    console.error('Error registering staff', err);
     res.status(500).json({ message: "Failed to register staff" });
   }
 };
