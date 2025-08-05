@@ -15,7 +15,9 @@ const {
   getStaffList,
   sendMassNotification,
   getUserProfile,
-  editUserProfile
+  editUserProfile,
+  editStaffById,
+  getStaffById
 } = require("../controllers/adminController");
 
 const {
