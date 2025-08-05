@@ -65,7 +65,7 @@ exports.getUserProfile = async (req, res) => {
     const user = await User.findById(userId).select("-password -resetToken -resetTokenExpiry");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json(user);
+    res.json({user});
   } catch (err) {
     res.status(500).json({ message: "Failed to load user profile" });
   }
@@ -113,3 +113,30 @@ exports.sendMassNotification = async (req, res) => {
     res.status(500).json({ message: "Failed to send notifications" });
   }
 };
+
+exports.editStaffById = async (req, res) => {
+  try {
+    const { fullName, phone, role, isSuspended } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { fullName, phone, role, isSuspended },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "Staff profile updated", user });
+  } catch (err) {
+    console.error('editStaffById error', err);
+    res.status(500).json({ message: "Failed to update staff" });
+  }
+};
+exports.getStaffById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'Staff not found' });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get staff info" });
+  }
+};
+

@@ -44,6 +44,10 @@ router.patch("/suspend-user/:id", protectRoute, isAdmin, toggleUserSuspension);
 router.get("/staff", protectRoute, isAdmin, getStaffList);
 router.get("/profile", protectRoute, isAdmin, getUserProfile);
 router.put("/profile", protectRoute, isAdmin, editUserProfile);
+router.patch("/profile/:id", protectRoute, isAdmin, editStaffById);
+router.get("/profile/:id", protectRoute, isAdmin, getStaffById);
+
+
 
 // Mass notification
 router.post("/admin/mass-notify", protectRoute, isAdmin, sendMassNotification);
@@ -68,8 +72,8 @@ router.post("/admin/audit-logs", protectRoute, isAdmin, async (req, res) => {
   }
 });
 router.delete("/admin/audit-logs/clear", protectRoute, isAdmin, clearAuditLogs);
-router.get("/admin/audit-logs/:id", protectRoute, isAdmin, getAuditLogById);
-router.get("/admin/audit-logs/user/:userId", protectRoute, isAdmin, getAuditLogsByUser);
+router.get("/admin/audit-logs", protectRoute, isAdmin, getAuditLogById);
+router.get("/admin/audit-logs/user", protectRoute, isAdmin, getAuditLogsByUser);
 router.get("/admin/audit-logs/action/:action", protectRoute, isAdmin, getAuditLogsByAction);
 
 module.exports = router;
