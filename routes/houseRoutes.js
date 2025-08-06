@@ -8,6 +8,7 @@ const {
   updateHouse,
   deleteHouse,
   assignCaretaker,
+  getVacantHouses,
   searchHouses,
   uploadHouse,
 } = require("../controllers/houseController");
@@ -25,6 +26,9 @@ router.get("/", getAllHouses);
 
 // Get house by ID
 router.get("/:id", getHouseById);
+
+// Get vacant houses
+router.get("/vacant", getVacantHouses);
 
 // Create house (single image, landlord only)
 router.post(

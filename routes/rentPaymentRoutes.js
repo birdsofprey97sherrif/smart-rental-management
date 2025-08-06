@@ -6,6 +6,7 @@ const {
   getPaymentsByHouse,
   getLandlordPayments,
   getTenantPayments,
+  sendReceiptEmail,
   getLandlordEarningsSummary,
   getCaretakerEarningsSummary,
   downloadReceipt,
@@ -25,6 +26,9 @@ router.get("/landlord-view", protectRoute, isLandlord, getLandlordPayments);
 
 // Tenant views their payments (alternative route)
 router.get("/tenant-view", protectRoute, isTenant, getTenantPayments);
+
+// handle rent via email
+router.get("/email-receipt/:id",protectRoute,sendReceiptEmail)
 
 // Download rent payment receipt
 router.get("/download-receipt/:id", protectRoute, downloadReceipt);
