@@ -35,7 +35,7 @@ const MaintenanceRoute = require("./routes/MaintenanceRoute");
 const rentRoute = require("./routes/rentPaymentRoutes");
 const relocationRoutes = require("./routes/relocationRoutes");
 const defaulterRoutes = require("./routes/defaulterRoutes");
-const notification = require("./routes/notificationRoutes")
+const notificationRoutes = require("./routes/notificationRoutes")
 
 // Route Mounting
 app.get("/", (req, res) => res.send("API is running"));
@@ -54,7 +54,7 @@ app.use("/api/rents", rentRoute);
 app.use("/api/relocations", relocationRoutes);
 app.use("/api/defaulters", defaulterRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/notifications",notification)
+app.use("/api/notifications",notificationRoutes)
 
 // Optional Global Error Handler
 // app.use((err, req, res, next) => {
