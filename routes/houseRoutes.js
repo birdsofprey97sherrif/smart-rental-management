@@ -41,18 +41,19 @@ router.post(
 );
 
 // Update house
-router.put("/:id", protectRoute, updateHouse);
+router.put("/:id", protectRoute,isLandlord, updateHouse);
 
 // Delete house
-router.delete("/:id", protectRoute, deleteHouse);
+router.delete("/:id", protectRoute,isLandlord,  deleteHouse);
 
 // Assign caretaker to house
-router.put("/:houseId/assign-caretaker", protectRoute, assignCaretaker);
+router.put("/:houseId/assign-caretaker", protectRoute,isLandlord, assignCaretaker);
 
 // Multiple image upload (e.g. up to 5 images)
 router.post(
   "/upload",
   protectRoute,
+  isLandlord,
   upload.array("photos", 5),
   uploadHouse
 );

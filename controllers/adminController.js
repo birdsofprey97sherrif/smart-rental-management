@@ -30,7 +30,7 @@ exports.getStaffList = async (req, res) => {
   try {
     const staff = await User.find({ role: { $in: ["landlord", "caretaker", "admin"] } })
       .select("-password -__v")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 });getCaretakerPayments
 
     const totalPages = 1; // Later calculate based on query & total count
     const currentPage = 1;
@@ -95,7 +95,7 @@ exports.sendMassNotification = async (req, res) => {
     const filter = target === "all" ? {} : { role: target };
     const users = await User.find(filter);
 
-    const jobs = users.map(user => {
+    const jobs = users.map(user => {getCaretakerPayments
       if (channel === "sms" && user.phone) {
         return sendSMS({ to: user.phone, message });
       } else if (channel === "email" && user.email) {

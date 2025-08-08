@@ -77,37 +77,41 @@ exports.getRelocationRequestById = async (req, res) => {
 };
 
 // Update relocation request status and notify tenant
+const { isValidStatus } = require("../utils/validation");
+const { notifyDriverAssignment } = require("../utils/notifications");
+
 exports.updateRelocationStatus = async (req, res) => {
-  try {
-    const { requestId } = req.params;
-    const { status } = req.body;
+  const { status, driverId } = req.body;
 
-    const request = await RelocationRequest.findById(requestId)
-      .populate("tenantId", "fullName phone email")
-      .populate("houseId", "title location");
-
-    if (!request) return res.status(404).json({ message: "Request not found" });
-
-    request.status = status;
-    await request.save();
-
-    // Send notifications
-    const smsMsg = `Relocation request for house "${request.houseId.title}" has been ${status}.`;
-    const emailMsg = `Dear ${request.tenantId.fullName},\n\nYour relocation request for house "${request.houseId.title}" has been ${status}.\nEstimated Cost: KES ${request.estimatedCost}.\n\nThank you.`;
-
-    await sendSMS({ to: request.tenantId.phone, message: smsMsg });
-    await sendEmail({
-      to: request.tenantId.email,
-      subject: "Relocation Request Update",
-      text: emailMsg
-    });
-
-    res.json({ message: `Relocation request ${status}`, request });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to update status" });
+  if (!isValidStatus(status)) {
+    return res.status(400).json({ message: "Invalid status value" });
   }
+
+  const request = await RelocationRequest.findById(req.params.id)
+    .populate("tenantId", "fullName")
+    .populate("houseId", "title")
+    .populate("driverId", "phone");
+
+  if (!request) return res.status(404).json({ message: "Relocation not found" });
+
+  request.status = status;
+  if (driverId) request.driverId = driverId;
+
+  await request.save();
+
+  // Optional driver SMS
+  if (status === "assigned" && request.driverId?.phone) {
+    await notifyDriverAssignment({
+      driverPhone: request.driverId.phone,
+      tenantName: request.tenantId.fullName,
+      houseTitle: request.houseId.title,
+    });
+  }
+
+  res.json({ message: "Status updated", request });
 };
 
+   
 // Delete a relocation request
 exports.deleteRelocationRequest = async (req, res) => {
   try {
@@ -198,3 +202,30 @@ exports.rateRelocation = async (req, res) => {
   await request.save();
   res.json({ message: "Thank you for your feedback!" });
 };
+
+// Get filtered relocation requests for admin dashboard
+exports.getFilteredRelocations = async (req, res) => {
+  try {
+    const { status, from, to } = req.query;
+
+    const query = {};
+    if (status) query.status = status;
+    if (from || to) {
+      query.requestedAt = {};
+      if (from) query.requestedAt.$gte = new Date(from);
+      if (to) query.requestedAt.$lte = new Date(to);
+    }
+
+    const requests = await RelocationRequest.find(query)
+      .populate("tenantId", "fullName phone email")
+      .populate("houseId", "title location")
+      .populate("approvedBy", "fullName")
+      .populate("driverId", "name phone")
+      .sort({ requestedAt: -1 });
+
+    res.json({ count: requests.length, requests });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch filtered requests" });
+  }
+};
+

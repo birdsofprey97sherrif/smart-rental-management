@@ -4,7 +4,7 @@ const House = require("../models/House");
 const User = require("../models/User");
 const {
   generateReceiptPDF,
-  generateRentHistoryPDF,
+  generateRentHistoryPDF
 } = require("../utils/pdfReceipt");
 const { sendEmail } = require("../utils/mailer");
 
@@ -76,7 +76,7 @@ exports.getPaymentsByHouse = async (req, res) => {
 // Get all payments for landlord
 exports.getLandlordPayments = async (req, res) => {
   try {
-    const landlordId = req.user.userId;
+    const landlordId = req.user.userId;getRequestById
     const agreements = await RentalAgreement.find({ landlordId });
     const agreementIds = agreements.map((ag) => ag._id);
 

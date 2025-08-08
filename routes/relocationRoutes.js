@@ -7,6 +7,10 @@ const {
   getRelocationRequestById,
   getAllRelocationRequests,
   updateRelocationStatus,
+  completeRelocation,
+  notifyTenantRelocation,
+  getFilteredRelocations,
+  deleteRelocationRequest,
   assignDriver,
   rateRelocation,
 } = require("../controllers/relocationController");
@@ -17,15 +21,20 @@ const { isTenant, isAdminOrCaretaker } = require("../middlewares/roleMiddleware"
 
 // Tenant requests relocation
 router.post("/request", protectRoute, isTenant, requestRelocation);
+router.patch("/complete/:requestId", protectRoute, isAdminOrCaretaker, completeRelocation);
 
 // Tenant views their relocation requests
 router.get("/mine", protectRoute, isTenant, getMyRelocationRequests);
+router.get("/admin", protectRoute, isAdminOrCaretaker, getFilteredRelocations);
 
 // admin or caretaker views relocation requests by id
 router.get("/requests/:id", protectRoute, isAdminOrCaretaker,getRelocationRequestById);
+router.post("/notify/:requestId", protectRoute, isAdminOrCaretaker, notifyTenantRelocation);
+
 
 // Admin or caretaker views all relocation requests
 router.get("/all", protectRoute, isAdminOrCaretaker, getAllRelocationRequests);
+router.delete("/:requestId", protectRoute, isAdminOrCaretaker, deleteRelocationRequest);
 
 // Admin or caretaker updates relocation status
 router.patch("/update/:requestId", protectRoute, isAdminOrCaretaker, updateRelocationStatus);

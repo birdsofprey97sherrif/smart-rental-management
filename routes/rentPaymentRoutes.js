@@ -7,13 +7,14 @@ const {
   getLandlordPayments,
   getTenantPayments,
   sendReceiptEmail,
+  getCaretakerPayments,
   getLandlordEarningsSummary,
   getCaretakerEarningsSummary,
   downloadReceipt,
   downloadRentHistory
 } = require("../controllers/rentPaymentController");
 const { protectRoute } = require("../middlewares/authMiddleware");
-const { isTenant, isLandlord } = require("../middlewares/roleMiddleware");
+const { isTenant, isLandlord, isCaretaker } = require("../middlewares/roleMiddleware");
 
 // Tenant pays rent
 router.post("/pay-rent", protectRoute, isTenant, payRent);
@@ -29,6 +30,9 @@ router.get("/tenant-view", protectRoute, isTenant, getTenantPayments);
 
 // handle rent via email
 router.get("/email-receipt/:id",protectRoute,sendReceiptEmail)
+
+// caretaker views all payments
+router.get("/caretaker-view", protectRoute, isCaretaker, getCaretakerPayments)
 
 // Download rent payment receipt
 router.get("/download-receipt/:id", protectRoute, downloadReceipt);
