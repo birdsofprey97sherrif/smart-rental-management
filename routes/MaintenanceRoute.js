@@ -10,7 +10,7 @@ const {
     getRequestById
 } = require("../controllers/maintenanceController");
 const { protectRoute } = require("../middlewares/authMiddleware");
-const { isTenant, isCaretaker } = require("../middlewares/roleMiddleware");
+const { isTenant, isCaretaker, isTenantOrLandlordOrCaretaker, isTenantOrCaretaker } = require("../middlewares/roleMiddleware");
 
 router.post("/maintenance", protectRoute, isTenantOrCaretaker, createMaintenanceRequest);
 router.get("/maintenance", protectRoute, isCaretaker, getAllRequestsForCaretaker);
