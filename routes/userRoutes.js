@@ -10,8 +10,8 @@ const {
 
 const { protectRoute, allowRoles } = require("../middlewares/authMiddleware");
 
-router.get("/profile", protectRoute, getUserProfile);
-router.put("/profile", protectRoute, updateUserProfile);
+router.get("/profile/get", protectRoute, getUserProfile);
+router.put("/profile/update", protectRoute, updateUserProfile);
 router.put("/deactivate", protectRoute, toggleAccountDeactivation);
 
 // ❗ Must ensure toggleSuspend is defined and exported
