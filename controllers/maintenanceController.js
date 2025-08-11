@@ -77,3 +77,62 @@ exports.getRequestById = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch request" });
   }
 };
+// Get all maintenance requests for a landlord
+exports.getRequestsForLandlord = async (req, res) => {
+  try {
+    const landlordId = req.user.userId;
+    const { status, houseId, startDate, endDate } = req.query;
+
+    let query = { landlordId };
+    if (status) query.status = status;
+    if (houseId) query.houseId = houseId;
+    if (startDate && endDate) {
+      query.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
+
+    const requests = await Maintenance.find(query)
+      .populate("tenantId", "fullName email")
+      .populate("houseId", "title location");
+
+    res.json({ count: requests.length, requests });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch landlord maintenance requests" });
+  }
+};
+// Get maintenance stats for landlord
+exports.getMaintenanceStatsForLandlord = async (req, res) => {
+  try {
+    const landlordId = req.user.userId;
+
+    const allRequests = await Maintenance.find({ landlordId });
+
+    const pending = allRequests.filter(r => r.status === "pending").length;
+    const inProgress = allRequests.filter(r => r.status === "in-progress").length;
+    const completed = allRequests.filter(r => r.status === "completed").length;
+
+    // This month
+    const now = new Date();
+    const thisMonthCount = allRequests.filter(r => {
+      const created = new Date(r.createdAt);
+      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }).length;
+
+    // Group by month for chart
+    const monthlyData = {};
+    allRequests.forEach(r => {
+      const date = new Date(r.createdAt);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      monthlyData[key] = (monthlyData[key] || 0) + 1;
+    });
+
+    res.json({
+      pending,
+      inProgress,
+      completed,
+      thisMonthCount,
+      monthlyData
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to get stats" });
+  }
+};

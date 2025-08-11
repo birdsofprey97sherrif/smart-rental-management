@@ -36,6 +36,9 @@ const rentRoute = require("./routes/rentPaymentRoutes");
 const relocationRoutes = require("./routes/relocationRoutes");
 const defaulterRoutes = require("./routes/defaulterRoutes");
 const notificationRoutes = require("./routes/notificationRoutes")
+const landlordDashboardRoutes = require("./routes/landlordDashboardRoutes");
+app.use("/api/landlord", landlordDashboardRoutes);
+
 
 // Route Mounting
 app.get("/", (req, res) => res.send("API is running"));
