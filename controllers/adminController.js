@@ -28,15 +28,43 @@ exports.registerStaff = async (req, res) => {
 // Get staff list
 exports.getStaffList = async (req, res) => {
   try {
-    const staff = await User.find({ role: { $in: ["landlord", "caretaker", "admin"] } })
+    const { search = '', page = 1, limit = 10 } = req.query;
+
+    // Build search query
+    const query = {
+      role: { $in: ["landlord", "caretaker", "admin"] },
+      ...(search
+        ? {
+            $or: [
+              { fullName: { $regex: search, $options: 'i' } },
+              { email: { $regex: search, $options: 'i' } },
+              { phone: { $regex: search, $options: 'i' } }
+            ]
+          }
+        : {})
+    };
+
+    // Pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Fetch staff
+    const staff = await User.find(query)
       .select("-password -__v")
-      .sort({ createdAt: -1 });getCaretakerPayments
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
 
-    const totalPages = 1; // Later calculate based on query & total count
-    const currentPage = 1;
+    // Count total for pagination
+    const totalCount = await User.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / Number(limit));
 
-    res.json({ staff, totalPages, currentPage });
+    res.json({
+      staff,
+      totalPages,
+      currentPage: Number(page),
+    });
   } catch (err) {
+    console.error("getStaffList error:", err);
     res.status(500).json({ message: "Failed to load staff list" });
   }
 };
