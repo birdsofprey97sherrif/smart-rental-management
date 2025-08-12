@@ -6,14 +6,14 @@ const { isLandlord } = require("../middlewares/roleMiddleware");
 const houseController = require("../controllers/houseController");
 const messageController = require("../controllers/messageController");
 const visitController = require("../controllers/visitController");
-const agreementController = require("../controllers/agreementController");
+const agreementController = require("../controllers/rentAgreementController");
 const relocationController = require("../controllers/relocationController");
 const maintenanceController = require("../controllers/maintenanceController");
 const defaulterController = require("../controllers/defaulterController");
-const staffController = require("../controllers/staffController");
-const tenantController = require("../controllers/tenantController");
-const broadcastController = require("../controllers/broadcastController");
-const activityLogController = require("../controllers/activityLogController");
+const staffController = require("../controllers/userController");
+const tenantController = require("../controllers/userController");
+const broadcastController = require("../controllers/messageController");
+const activityLogController = require("../controllers/defaulterController");
 
 // Apply landlord auth middleware to all
 router.use(protectRoute, isLandlord);
