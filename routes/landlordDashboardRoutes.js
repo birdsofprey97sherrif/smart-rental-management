@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { protect, authorize } = require("../middleware/authMiddleware");
-
+const { protectRoute } = require("../middlewares/authMiddleware");
+const { isLandlord } = require("../middlewares/roleMiddleware");
 // Controllers
 const houseController = require("../controllers/houseController");
 const messageController = require("../controllers/messageController");
@@ -16,7 +16,7 @@ const broadcastController = require("../controllers/broadcastController");
 const activityLogController = require("../controllers/activityLogController");
 
 // Apply landlord auth middleware to all
-router.use(protect, authorize("landlord"));
+router.use(protectRoute, isLandlord);
 
 /**
  * 📦 Houses Management

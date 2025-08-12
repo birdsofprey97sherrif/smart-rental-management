@@ -1,9 +1,9 @@
-exports.getLandlordDashboardStats = async (req, res) => {
+export async function getLandlordDashboardStats(req, res) {
   try {
     const landlordId = req.user.userId;
 
     // Houses
-    const houses = await House.find({ landlordId });
+    const houses = await houses.find({ landlordId });
     const totalHouses = houses.length;
     const occupied = houses.filter(h => h.status === "occupied").length;
     const vacant = houses.filter(h => h.status === "vacant").length;
@@ -60,11 +60,11 @@ exports.getLandlordDashboardStats = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to load landlord dashboard stats" });
   }
-};
+}
 
 
 
-exports.getLandlordActivityLog = async (req, res) => {
+export async function getLandlordActivityLog(req, res) {
   try {
     const landlordId = req.user.userId;
     const { type, skip = 0, limit = 10 } = req.query;
@@ -92,7 +92,7 @@ exports.getLandlordActivityLog = async (req, res) => {
     }
 
     if (!type || type === "relocation") {
-      const relocations = await Relocation.find({ landlordId })
+      const relocations = await relocations.find({ landlordId })
         .sort({ createdAt: -1 })
         .skip(parseInt(skip))
         .limit(parseInt(limit))
@@ -141,4 +141,4 @@ exports.getLandlordActivityLog = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to load activity log" });
   }
-};
+}
