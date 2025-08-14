@@ -41,3 +41,21 @@ exports.getHouseMessages = async (req, res) => {
     res.status(500).json({ message: "Error loading messages" });
   }
 };
+
+exports.getmessageHistory = async (req, res) => {
+  try {
+    const { houseId } = req.params;
+    if (!houseId) {
+      return res.status(400).json({ message: "houseId is required" });
+    }
+
+    const messages = await Message.find({ houseId })
+      .populate("senderId", "fullName role")
+      .populate("receiverId", "fullName role")
+      .sort({ sentAt: 1 });
+
+    res.status(200).json({ count: messages.length, messages });
+  } catch (err) {
+    res.status(500).json({ message: "Error loading messages" });
+  }
+};

@@ -120,3 +120,47 @@ exports.sendDefaulterReminders = async (req, res) => {
     res.status(500).json({ message: "Failed to send reminders" });
   }
 };
+
+
+exports.getDefaulterList = async (req, res) => {
+  try {
+    const landlordId = req.user.userId;
+    const today = new Date();
+    const dueDay = 5;
+
+    if (today.getDate() <= dueDay) {
+      return res.status(200).json({ message: "No defaulters yet. Due date not reached." });
+    }
+
+    const { start, end } = getCurrentMonthRange();
+    const agreements = await RentalAgreement.find({ landlordId });
+
+    // Run DB queries in parallel for efficiency
+    const defaulterPromises = agreements.map(async (ag) => {
+      const payment = await RentPayment.findOne({
+        agreementId: ag._id,
+        paymentDate: { $gte: start, $lte: end }
+      });
+
+      if (!payment) {
+        const tenant = await User.findById(ag.tenantId).select("fullName email phone");
+        return {
+          tenant,
+          house: ag.houseId,
+          monthlyRent: ag.monthlyRent,
+          leaseStart: ag.leaseStart,
+          leaseEnd: ag.leaseEnd
+        };
+      }
+      return null;
+    });
+
+    const defaulters = (await Promise.all(defaulterPromises)).filter(Boolean);
+
+    res.status(200).json({ count: defaulters.length, defaulters });
+
+  } catch (err) {
+    console.error("Defaulter tracking error:", err);
+    res.status(500).json({ message: "Failed to get defaulters" });
+  }
+}
