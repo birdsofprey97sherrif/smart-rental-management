@@ -123,22 +123,27 @@ exports.sendMassNotification = async (req, res) => {
     const filter = target === "all" ? {} : { role: target };
     const users = await User.find(filter);
 
-    const jobs = users.map(user => {
-      if (channel === "sms" && user.phone) {
-        return sendSMS({ to: user.phone, message });
-      } else if (channel === "email" && user.email) {
-        return sendEmail({
-          to: user.email,
-          subject: "Important Update",
-          text: message,
-        });
-      }
-    });
+    const jobs = users
+  .map(user => {
+    if (channel === "sms" && user.phone) {
+      return sendSMS({ to: user.phone, message }).catch(err => console.error(`SMS failed for ${user.phone}`, err));
+    } else if (channel === "email" && user.email) {
+      return sendEmail({
+        to: user.email,
+        subject: "Important Update",
+        text: message,
+      }).catch(err => console.error(`Email failed for ${user.email}`, err));
+    }
+    return null;
+  })
+  .filter(Boolean);
+
 
     await Promise.all(jobs);
     res.json({ message: `Message sent to ${users.length} users.` });
   } catch (err) {
-    res.status(500).json({ message: "Failed to send notifications" });
+  console.error("Mass notification error:", err);
+  res.status(500).json({ message: "Failed to send notifications" });
   }
 };
 
