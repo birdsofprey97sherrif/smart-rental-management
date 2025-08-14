@@ -35,12 +35,12 @@ exports.getStaffList = async (req, res) => {
       role: { $in: ["landlord", "caretaker", "admin"] },
       ...(search
         ? {
-            $or: [
-              { fullName: { $regex: search, $options: 'i' } },
-              { email: { $regex: search, $options: 'i' } },
-              { phone: { $regex: search, $options: 'i' } }
-            ]
-          }
+          $or: [
+            { fullName: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } }
+          ]
+        }
         : {})
     };
 
@@ -93,7 +93,7 @@ exports.getUserProfile = async (req, res) => {
     const user = await User.findById(userId).select("-password -resetToken -resetTokenExpiry");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({user});
+    res.json({ user });
   } catch (err) {
     res.status(500).json({ message: "Failed to load user profile" });
   }
@@ -102,10 +102,10 @@ exports.getUserProfile = async (req, res) => {
 // Edit user profile
 exports.editUserProfile = async (req, res) => {
   try {
-    const { fullName, phone, role, suspended  } = req.body;
+    const { fullName, phone, role, suspended } = req.body;
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { fullName, phone, role, suspended  },
+      { fullName, phone, role, suspended },
       { new: true }
     );
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -123,7 +123,7 @@ exports.sendMassNotification = async (req, res) => {
     const filter = target === "all" ? {} : { role: target };
     const users = await User.find(filter);
 
-    const jobs = users.map(user => {getCaretakerPayments
+    const jobs = users.map(user => {
       if (channel === "sms" && user.phone) {
         return sendSMS({ to: user.phone, message });
       } else if (channel === "email" && user.email) {
