@@ -49,4 +49,19 @@ router.post("/rate", protectRoute, isTenant, rateRelocation);
 router.get("/notifications", protectRoute, getUserNotifications);
 router.patch("/notifications/mark-seen", protectRoute, markAsSeen);
 
+
+// routes/relocationRoutes.js
+router.get("/my-houses", authMiddleware, async (req, res) => {
+  try {
+    const caretakerId = req.user.id;
+    const relocations = await Relocation.find({ caretaker: caretakerId })
+      .populate("houseId tenantId")
+      .sort({ createdAt: -1 })
+      .limit(Number(req.query.limit) || 5);
+
+    res.json({ relocations });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 module.exports = router;

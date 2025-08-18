@@ -18,4 +18,17 @@ router.patch("/maintenance/:id", protectRoute, isCaretaker, updateMaintenanceSta
 router.delete("/maintenance",protectRoute, isTenantOrLandlordOrCaretaker,  deleteMaintenanceRequest)
 router.get("/maintenance/",protectRoute, isTenant, getRequestsForTenant)
 router.get("/maintenance/:id", protectRoute, isCaretaker, getRequestById)
+// routes/maintenanceRoutes.js
+router.get("/my-houses", authMiddleware, async (req, res) => {
+  try {
+    const caretakerId = req.user.id;
+    const requests = await Maintenance.find({ caretaker: caretakerId })
+      .populate("houseId tenantId")
+      .sort({ createdAt: -1 });
+
+    res.json({ requests });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 module.exports = router;

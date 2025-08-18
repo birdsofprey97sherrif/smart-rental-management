@@ -38,6 +38,9 @@ const defaulterRoutes = require("./routes/defaulterRoutes");
 const notificationRoutes = require("./routes/notificationRoutes")
 // const landlordDashboardRoutes = require("./routes/landlordDashboardRoutes");
 // app.use("/api/landlord", landlordDashboardRoutes);
+const caretakerDashboardRoutes = require("./routes/caretakerDashboardRoutes");
+app.use("/api/caretaker", caretakerDashboardRoutes);
+
 
 
 // Route Mounting
