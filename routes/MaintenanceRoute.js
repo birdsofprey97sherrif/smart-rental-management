@@ -19,7 +19,7 @@ router.delete("/maintenance",protectRoute, isTenantOrLandlordOrCaretaker,  delet
 router.get("/maintenance/",protectRoute, isTenant, getRequestsForTenant)
 router.get("/maintenance/:id", protectRoute, isCaretaker, getRequestById)
 // routes/maintenanceRoutes.js
-router.get("/my-houses", authMiddleware, async (req, res) => {
+router.get("/my-houses", protectRoute, isCaretaker, async (req, res) => {
   try {
     const caretakerId = req.user.id;
     const requests = await Maintenance.find({ caretaker: caretakerId })
