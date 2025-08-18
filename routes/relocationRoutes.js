@@ -51,7 +51,7 @@ router.patch("/notifications/mark-seen", protectRoute, markAsSeen);
 
 
 // routes/relocationRoutes.js
-router.get("/my-houses", authMiddleware, async (req, res) => {
+router.get("/my-houses", protectRoute, isCaretaker, async (req, res) => {
   try {
     const caretakerId = req.user.id;
     const relocations = await Relocation.find({ caretaker: caretakerId })
