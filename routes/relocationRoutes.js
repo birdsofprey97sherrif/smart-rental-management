@@ -17,7 +17,7 @@ const {
 
 const { getUserNotifications, markAsSeen } = require("../controllers/notificationController");
 const { protectRoute } = require("../middlewares/authMiddleware");
-const { isTenant, isAdminOrCaretaker } = require("../middlewares/roleMiddleware");
+const { isTenant, isAdminOrCaretaker, isCaretaker } = require("../middlewares/roleMiddleware");
 
 // Tenant requests relocation
 router.post("/request", protectRoute, isTenant, requestRelocation);
@@ -54,7 +54,7 @@ router.patch("/notifications/mark-seen", protectRoute, markAsSeen);
 router.get("/my-houses", protectRoute, isCaretaker, async (req, res) => {
   try {
     const caretakerId = req.user.id;
-    const relocations = await Relocation.find({ caretaker: caretakerId })
+    const relocations = await relocations.find({ caretaker: caretakerId })
       .populate("houseId tenantId")
       .sort({ createdAt: -1 })
       .limit(Number(req.query.limit) || 5);
