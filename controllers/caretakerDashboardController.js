@@ -1,7 +1,7 @@
 // controllers/caretakerDashboardController.js
-const Maintenance = require("../models/Maintenance");
-const Relocation = require("../models/Relocation");
-const Visit = require("../models/Visit");
+const Maintenance = require("../models/MaintenanceRequest");
+const Relocation = require("../models/RelocationRequest");
+const Visit = require("../models/VisitRequest");
 const House = require("../models/House");
 
 exports.getDashboardStats = async (req, res) => {
