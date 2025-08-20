@@ -1,12 +1,20 @@
+const House = require("../models/House");
+const Relocation = require("../models/Relocation");
+const Maintenance = require("../models/Maintenance");
+const VisitRequest = require("../models/VisitRequest");
+const RentPayment = require("../models/RentPayment");
+const User = require("../models/User");
+const RentalAgreement = require("../models/RentalAgreement");
+
 export async function getLandlordDashboardStats(req, res) {
   try {
     const landlordId = req.user.userId;
 
     // Houses
-    const houses = await houses.find({ landlordId });
-    const totalHouses = houses.length;
-    const occupied = houses.filter(h => h.status === "occupied").length;
-    const vacant = houses.filter(h => h.status === "vacant").length;
+    const House = await House.find({ landlordId });
+    const totalHouses = House.length;
+    const occupied = House.filter(h => h.status === "occupied").length;
+    const vacant = House.filter(h => h.status === "vacant").length;
 
     // Tenants & Caretakers
     const tenants = await User.find({ role: "tenant", landlordId });
@@ -19,7 +27,24 @@ export async function getLandlordDashboardStats(req, res) {
     const pendingRelocations = await Relocation.countDocuments({ landlordId, status: "pending" });
 
     // Defaulters
-    const defaulters = await RentPayment.countDocuments({ landlordId, isDefaulted: true });
+    // Inside getLandlordDashboardStats
+const agreements = await RentalAgreement.find({ landlordId });
+const { start, end } = getCurrentMonthRange();
+
+const defaulterPromises = agreements.map(async (ag) => {
+  const payment = await RentPayment.findOne({
+    agreementId: ag._id,
+    paymentDate: { $gte: start, $lte: end }
+  });
+  return payment ? null : ag.tenantId;
+});
+
+const defaulters = (await Promise.all(defaulterPromises)).filter(Boolean);
+
+res.json({
+  defaulters: defaulters.length
+});
+
 
     // Maintenance stats
     const allRequests = await Maintenance.find({ landlordId });
@@ -56,6 +81,7 @@ export async function getLandlordDashboardStats(req, res) {
         monthlyData
       }
     });
+    
 
   } catch (err) {
     res.status(500).json({ message: "Failed to load landlord dashboard stats" });
@@ -92,7 +118,7 @@ export async function getLandlordActivityLog(req, res) {
     }
 
     if (!type || type === "relocation") {
-      const relocations = await relocations.find({ landlordId })
+      const relocations = await Relocation.find({ landlordId })
         .sort({ createdAt: -1 })
         .skip(parseInt(skip))
         .limit(parseInt(limit))

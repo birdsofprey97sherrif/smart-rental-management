@@ -14,6 +14,10 @@ const staffController = require("../controllers/userController");
 const tenantController = require("../controllers/userController");
 const broadcastController = require("../controllers/messageController");
 const activityLogController = require("../controllers/defaulterController");
+const landlordDashboardController = require("../controllers/landlordDashboardController");
+
+router.get("/dashboard", landlordDashboardController.getLandlordDashboardStats);
+router.get("/activity", landlordDashboardController.getLandlordActivityLog);
 
 // Apply landlord auth middleware to all
 router.use(protectRoute, isLandlord);
