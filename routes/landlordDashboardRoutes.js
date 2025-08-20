@@ -91,5 +91,9 @@ router.get("/tenants", userController.getTenantsForLandlord);
 /**
  * 📊 Activity Logs (separate controller)
  */
-router.get("/logs", activityLogController.getLandlordActivity); // ✅ avoid duplicate `/activity`
+// 📊 Activity Logs
+router.get("/logs", activityLogController.getLogs);            // all logs
+router.get("/logs/:userId", activityLogController.getUserLogs); // logs for one user
+router.post("/logs", activityLogController.createLog);          // create new log
+ // ✅ avoid duplicate `/activity`
 module.exports = router;
