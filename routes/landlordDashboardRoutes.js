@@ -15,15 +15,14 @@ const userController = require("../controllers/userController");
 const landlordDashboardController = require("../controllers/landlordDashboardController");
 const activityLogController = require("../controllers/activityLogController"); // ✅ new file
 
-// Dashboard
-router.get("/dashboard", protectRoute, isLandlord, landlordDashboardController.getDashboardStats);
-
-// Activity logs
-router.get("/activity", protectRoute, isLandlord, landlordDashboardController.getLandlordActivityLog);
-
 // Apply landlord auth middleware
 router.use(protectRoute, isLandlord);
 
+// Dashboard
+router.get("/dashboard", landlordDashboardController.getLandlordDashboardStats);
+
+// Activity logs
+router.get("/activity", landlordDashboardController.getLandlordActivityLog);
 /**
  * 📦 Houses Management
  */
