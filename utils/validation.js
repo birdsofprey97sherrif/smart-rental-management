@@ -5,7 +5,7 @@ const isValidStatus = (status) => {
   return allowedStatuses.includes(status);
 };
 
-export default {
+module.exports = {
   isValidStatus,
   allowedStatuses,
 };
