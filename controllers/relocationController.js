@@ -77,7 +77,7 @@ exports.getRelocationRequestById = async (req, res) => {
 };
 
 // Update relocation request status and notify tenant
-const { isValidStatus } = require("../utils/validation");
+const { isValidStatus } = require("../utils/validation").default;
 const { notifyDriverAssignment } = require("../utils/notifications");
 
 exports.updateRelocationStatus = async (req, res) => {
