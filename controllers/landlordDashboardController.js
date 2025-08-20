@@ -71,23 +71,22 @@ exports.getLandlordDashboardStats = async (req, res) => {
       monthlyData[key] = (monthlyData[key] || 0) + 1;
     });
 
-     res.json([
-      { houses: { total: totalHouses, occupied, vacant } },
-      { tenants: tenants.length },
-      { caretakers: caretakers.length },
-      { visits: pendingVisits },
-      { relocations: pendingRelocations },
-      { defaulters }, // full array of tenantIds
-      {
-        maintenance: {
-          pending: pendingMaint,
-          inProgress: inProgressMaint,
-          completed: completedMaint,
-          thisMonthCount: thisMonthMaint,
-          monthlyData
-        }
+    res.json({
+      houses: { total: totalHouses, occupied, vacant },
+      tenants: tenants.length,
+      caretakers: caretakers.length,
+      visits: pendingVisits,
+      relocations: pendingRelocations,
+      defaulters: defaulters.length, // 👈 number not array
+      maintenance: {
+        pending: pendingMaint,
+        inProgress: inProgressMaint,
+        completed: completedMaint,
+        thisMonthCount: thisMonthMaint,
+        monthlyData
       }
-    ]);
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to load landlord dashboard stats" });
