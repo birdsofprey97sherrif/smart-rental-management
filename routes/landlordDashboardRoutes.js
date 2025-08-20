@@ -16,10 +16,10 @@ const landlordDashboardController = require("../controllers/landlordDashboardCon
 const activityLogController = require("../controllers/activityLogController"); // ✅ new file
 
 // Dashboard
-router.get("/dashboard", protectRoute, isLandlord, getDashboardStats);
+router.get("/dashboard", protectRoute, isLandlord, landlordDashboardController.getDashboardStats);
 
 // Activity logs
-router.get("/activity", protectRoute, isLandlord, getLandlordActivityLog);
+router.get("/activity", protectRoute, isLandlord, landlordDashboardController.getLandlordActivityLog);
 
 // Apply landlord auth middleware
 router.use(protectRoute, isLandlord);
