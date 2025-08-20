@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { protectRoute } = require("../middlewares/authMiddleware");
 const { isLandlord } = require("../middlewares/roleMiddleware");
+
 // Controllers
 const houseController = require("../controllers/houseController");
 const messageController = require("../controllers/messageController");
@@ -10,16 +11,17 @@ const rentAgreementController = require("../controllers/rentAgreementController"
 const relocationController = require("../controllers/relocationController");
 const maintenanceController = require("../controllers/maintenanceController");
 const defaulterController = require("../controllers/defaulterController");
-const staffController = require("../controllers/userController");
-const tenantController = require("../controllers/userController");
-const broadcastController = require("../controllers/messageController");
-const activityLogController = require("../controllers/defaulterController");
+const userController = require("../controllers/userController");
 const landlordDashboardController = require("../controllers/landlordDashboardController");
+const activityLogController = require("../controllers/activityLogController"); // ✅ new file
 
+// Dashboard
 router.get("/dashboard", landlordDashboardController.getLandlordDashboardStats);
+
+// Activity logs
 router.get("/activity", landlordDashboardController.getLandlordActivityLog);
 
-// Apply landlord auth middleware to all
+// Apply landlord auth middleware
 router.use(protectRoute, isLandlord);
 
 /**
@@ -69,7 +71,7 @@ router.patch("/maintenance/:id/update-status", maintenanceController.updateMaint
 /**
  * 📢 Broadcast Messaging
  */
-router.post("/broadcast", broadcastController.sendBroadcast);
+router.post("/broadcast", messageController.sendBroadcast); // ✅ reuse same controller
 
 /**
  * 💰 Defaulters
@@ -80,15 +82,14 @@ router.post("/defaulters/notify", defaulterController.notifyDefaulters);
 /**
  * 👥 Staff & Tenants
  */
-router.post("/staff", staffController.registerStaff); // caretaker, assistant, etc.
-router.get("/staff", staffController.getStaffForLandlord);
+router.post("/staff", userController.registerStaff);
+router.get("/staff", userController.getStaffForLandlord);
 
-router.post("/tenants", tenantController.registerTenant);
-router.get("/tenants", tenantController.getTenantsForLandlord);
+router.post("/tenants", userController.registerTenant);
+router.get("/tenants", userController.getTenantsForLandlord);
 
 /**
- * 📊 Activity Logs
+ * 📊 Activity Logs (separate controller)
  */
-router.get("/activity", activityLogController.getLandlordActivity);
-
+router.get("/logs", activityLogController.getLandlordActivity); // ✅ avoid duplicate `/activity`
 module.exports = router;
