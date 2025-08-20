@@ -14,7 +14,10 @@ function getCurrentMonthRange() {
   return { start, end };
 }
 
-async function getLandlordDashboardStats(req, res) {
+// =====================
+// Landlord Dashboard Stats
+// =====================
+exports.getLandlordDashboardStats = async (req, res) => {
   try {
     const landlordId = req.user.userId;
 
@@ -88,9 +91,12 @@ async function getLandlordDashboardStats(req, res) {
     console.error(err);
     res.status(500).json({ message: "Failed to load landlord dashboard stats" });
   }
-}
+};
 
-async function getLandlordActivityLog(req, res) {
+// =====================
+// Landlord Activity Log
+// =====================
+exports.getLandlordActivityLog = async (req, res) => {
   try {
     const landlordId = req.user.userId;
     const { type, skip = 0, limit = 10 } = req.query;
@@ -168,9 +174,4 @@ async function getLandlordActivityLog(req, res) {
     console.error(err);
     res.status(500).json({ message: "Failed to load activity log" });
   }
-}
-
-module.exports = {
-  getLandlordDashboardStats,
-  getLandlordActivityLog
 };

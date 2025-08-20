@@ -32,7 +32,7 @@ router.get("/houses", houseController.getAllHouses);
 router.get("/houses/:id", houseController.getHouseById);
 router.put("/houses/:id", houseController.updateHouse);
 router.delete("/houses/:id", houseController.deleteHouse);
-router.post("/houses/:id/upload", houseController.uploadHouseImages);
+router.post("/houses/:id/upload", houseController.uploadHouse);
 router.post("/houses/:id/assign-caretaker", houseController.assignCaretaker);
 
 /**
