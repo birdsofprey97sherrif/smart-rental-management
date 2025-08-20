@@ -6,15 +6,23 @@ const RentPayment = require("../models/RentPayment");
 const User = require("../models/User");
 const RentalAgreement = require("../models/RentalAgreement");
 
-export async function getLandlordDashboardStats(req, res) {
+// helper function for current month range
+function getCurrentMonthRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  return { start, end };
+}
+
+async function getLandlordDashboardStats(req, res) {
   try {
     const landlordId = req.user.userId;
 
     // Houses
-    const House = await House.find({ landlordId });
-    const totalHouses = House.length;
-    const occupied = House.filter(h => h.status === "occupied").length;
-    const vacant = House.filter(h => h.status === "vacant").length;
+    const houses = await House.find({ landlordId });
+    const totalHouses = houses.length;
+    const occupied = houses.filter(h => h.status === "occupied").length;
+    const vacant = houses.filter(h => h.status === "vacant").length;
 
     // Tenants & Caretakers
     const tenants = await User.find({ role: "tenant", landlordId });
@@ -27,24 +35,18 @@ export async function getLandlordDashboardStats(req, res) {
     const pendingRelocations = await Relocation.countDocuments({ landlordId, status: "pending" });
 
     // Defaulters
-    // Inside getLandlordDashboardStats
-const agreements = await RentalAgreement.find({ landlordId });
-const { start, end } = getCurrentMonthRange();
+    const agreements = await RentalAgreement.find({ landlordId });
+    const { start, end } = getCurrentMonthRange();
 
-const defaulterPromises = agreements.map(async (ag) => {
-  const payment = await RentPayment.findOne({
-    agreementId: ag._id,
-    paymentDate: { $gte: start, $lte: end }
-  });
-  return payment ? null : ag.tenantId;
-});
+    const defaulterPromises = agreements.map(async (ag) => {
+      const payment = await RentPayment.findOne({
+        agreementId: ag._id,
+        paymentDate: { $gte: start, $lte: end }
+      });
+      return payment ? null : ag.tenantId;
+    });
 
-const defaulters = (await Promise.all(defaulterPromises)).filter(Boolean);
-
-res.json({
-  defaulters: defaulters.length
-});
-
+    const defaulters = (await Promise.all(defaulterPromises)).filter(Boolean);
 
     // Maintenance stats
     const allRequests = await Maintenance.find({ landlordId });
@@ -72,7 +74,7 @@ res.json({
       caretakers: caretakers.length,
       visits: pendingVisits,
       relocations: pendingRelocations,
-      defaulters,
+      defaulters: defaulters.length, // 👈 number not array
       maintenance: {
         pending: pendingMaint,
         inProgress: inProgressMaint,
@@ -81,16 +83,14 @@ res.json({
         monthlyData
       }
     });
-    
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to load landlord dashboard stats" });
   }
 }
 
-
-
-export async function getLandlordActivityLog(req, res) {
+async function getLandlordActivityLog(req, res) {
   try {
     const landlordId = req.user.userId;
     const { type, skip = 0, limit = 10 } = req.query;
@@ -165,6 +165,12 @@ export async function getLandlordActivityLog(req, res) {
       logs: logs.slice(0, parseInt(limit)) // send only first `limit` after merging
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to load activity log" });
   }
 }
+
+module.exports = {
+  getLandlordDashboardStats,
+  getLandlordActivityLog
+};
