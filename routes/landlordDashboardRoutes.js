@@ -44,39 +44,39 @@ router.get("/messages/:houseId", messageController.getHouseMessages);
 /**
  * 📝 Visit Requests
  */
-router.get("/visits", visitController.getAllForLandlord);
-router.patch("/visits/:id/approve", visitController.approveVisit);
-router.patch("/visits/:id/decline", visitController.declineVisit);
+router.get("/visits", visitController.getMyVisitRequests);
+router.patch("/visits/:id/approve", visitController.respondToVisit);
+router.patch("/visits/:id/decline", visitController.respondToVisit);
 
 /**
  * 📜 Rental Agreements
  */
-router.get("/agreements", rentAgreementController.getAllrentAgreementsForLandlord);
+router.get("/agreements", rentAgreementController.getAgreementsByRoles);
 router.patch("/agreements/:id/sign", rentAgreementController.markDepositPaid);
 
 /**
  * 🚚 Relocations
  */
-router.get("/relocations", relocationController.getAllForLandlord);
-router.patch("/relocations/:id/approve", relocationController.approveRelocation);
-router.patch("/relocations/:id/decline", relocationController.declineRelocation);
+router.get("/relocations", relocationController.getRelocationRequestById);
+router.patch("/relocations/:id/approve", relocationController.updateRelocationStatus);
+router.patch("/relocations/:id/decline", relocationController.updateRelocationStatus);
 
 /**
  * 🛠 Maintenance Requests
  */
-router.get("/maintenance", maintenanceController.getAllForLandlord);
-router.get("/maintenance/summary", maintenanceController.getSummaryStats);
+router.get("/maintenance", maintenanceController.getRequestsForLandlord);
+router.get("/maintenance/summary", maintenanceController.getMaintenanceStatsForLandlord);
 router.patch("/maintenance/:id/update-status", maintenanceController.updateMaintenanceStatus);
 
 /**
  * 📢 Broadcast Messaging
  */
-router.post("/broadcast", messageController.sendBroadcast); // ✅ reuse same controller
+router.post("/broadcast", messageController.sendMessage); // ✅ reuse same controller
 
 /**
  * 💰 Defaulters
  */
-router.get("/defaulters", defaulterController.getDefaultersForLandlord);
+router.get("/defaulters", defaulterController.getDefaulters);
 router.post("/defaulters/notify", defaulterController.notifyDefaulters);
 
 /**

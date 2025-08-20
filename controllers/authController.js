@@ -6,6 +6,7 @@ const User = require("../models/User");
 const { sendEmail } = require("../utils/email");
 
 // Register
+// Register
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
@@ -21,27 +22,33 @@ exports.register = async (req, res) => {
       tenantDetails,
       landlordDetails,
       caretakerDetails,
+      landlord, // optional: if registering a staff/tenant under landlord
     } = req.body;
 
-    if (!fullName || !email || !phone || !password || !role)
+    if (!fullName || !email || !phone || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
+    }
 
+    // Ensure unique email/phone
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
-    if (existingUser)
+    if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
+    }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Email verification setup
     const verifyToken = crypto.randomBytes(32).toString("hex");
     const verifyTokenExpiry = Date.now() + 1000 * 60 * 15;
 
+    // ✅ Don’t hash here – schema will handle password hashing
     const newUser = new User({
       fullName,
       email,
       phone,
-      password: hashedPassword,
+      password,
       role,
       verifyToken,
       verifyTokenExpiry,
+      landlord: landlord || null, // if staff/tenant tied to landlord
     });
 
     if (role === "tenant") newUser.tenantDetails = tenantDetails;
@@ -50,6 +57,7 @@ exports.register = async (req, res) => {
 
     await newUser.save();
 
+    // Send verification email
     const verifyLink = `${process.env.FRONTEND_URL}/verify-account/${verifyToken}`;
     const msg = `Hi ${fullName},\n\nPlease verify your account:\n${verifyLink}\n\nThis link expires in 15 minutes.`;
 
@@ -65,17 +73,23 @@ exports.register = async (req, res) => {
 };
 
 // Login
+// Login
 exports.login = async (req, res) => {
   try {
     const { emailOrPhone, password } = req.body;
+
     const user = await User.findOne({
       $or: [{ email: emailOrPhone }, { phone: emailOrPhone }],
     });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid password" });
+    const isMatch = await user.matchPassword(password); // ✅ use schema method
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -83,17 +97,31 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    // Frontend redirect logic (optional)
     let redirectTo = "/";
     if (user.role === "admin") redirectTo = "/admin/dashboard";
     if (user.role === "landlord") redirectTo = "/landlord/dashboard";
     if (user.role === "tenant") redirectTo = "/tenant/dashboard";
     if (user.role === "caretaker") redirectTo = "/caretaker/dashboard";
 
-    res.json({ token, role: user.role, redirectTo, user });
+    res.json({
+      token,
+      role: user.role,
+      redirectTo,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
+    });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });
   }
 };
+
 
 // Verify Account
 exports.verifyAccount = async (req, res) => {
