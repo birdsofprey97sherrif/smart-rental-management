@@ -17,7 +17,7 @@ const {
 
 const { getUserNotifications, markAsSeen } = require("../controllers/notificationController");
 const { protectRoute } = require("../middlewares/authMiddleware");
-const { isTenant, isAdminOrCaretaker, isCaretaker } = require("../middlewares/roleMiddleware");
+const { isTenant, isAdminOrCaretakerOrLandlord, isCaretaker } = require("../middlewares/roleMiddleware");
 
 // Tenant requests relocation
 router.post("/request", protectRoute, isTenant, requestRelocation);
@@ -33,7 +33,7 @@ router.post("/notify/:requestId", protectRoute, isAdminOrCaretaker, notifyTenant
 
 
 // Admin or caretaker views all relocation requests
-router.get("/all", protectRoute, isAdminOrCaretaker, getAllRelocationRequests);
+router.get("/all", protectRoute, isAdminOrCaretakerOrLandlord, getAllRelocationRequests);
 router.delete("/:requestId", protectRoute, isAdminOrCaretaker, deleteRelocationRequest);
 
 // Admin or caretaker updates relocation status
