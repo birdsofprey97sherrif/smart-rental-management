@@ -1,3 +1,5 @@
+const { isAdmin } = require("./authMiddleware");
+
 function allowRoles(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
@@ -19,4 +21,7 @@ module.exports = {
   isTenantOrLandlordOrCaretaker: allowRoles("tenant", "landlord", "caretaker"),
   isTenantOrLandlordOrAdmin: allowRoles("tenant", "landlord", "admin"),
   isAdminOrCaretaker: allowRoles("admin", "caretaker"),
+  isAdminOrCaretakerOrLandlord: allowRoles("admin", "caretaker", "landlord"),
+  isAdminOrLandlord: allowRoles("admin", "landlord"),
+  isAdminOrTenant: allowRoles("admin", "tenant"),
 };

@@ -17,7 +17,7 @@ const {
 
 const { getUserNotifications, markAsSeen } = require("../controllers/notificationController");
 const { protectRoute } = require("../middlewares/authMiddleware");
-const { isTenant, isAdminOrCaretakerOrLandlord, isCaretaker } = require("../middlewares/roleMiddleware");
+const { isTenant, isAdminOrCaretakerOrLandlord, isCaretaker, isAdminOrCaretaker } = require("../middlewares/roleMiddleware");
 
 // Tenant requests relocation
 router.post("/request", protectRoute, isTenant, requestRelocation);
