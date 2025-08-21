@@ -71,22 +71,26 @@ exports.getLandlordDashboardStats = async (req, res) => {
       monthlyData[key] = (monthlyData[key] || 0) + 1;
     });
 
-    res.json([
-  { houses: { total: totalHouses, occupied, vacant } },
-  { tenants: tenants.length },
-  { caretakers: caretakers.length },
-  { visits: pendingVisits },
-  { relocations: pendingRelocations },
-  { defaulters }, // 👈 array instead of count
-  { maintenance: {
-      pending: pendingMaint,
-      inProgress: inProgressMaint,
-      completed: completedMaint,
-      thisMonthCount: thisMonthMaint,
-      monthlyData
-    }
-  }
-]);
+    res.json({
+      houses: {
+        total: totalHouses,
+        occupied,
+        vacant,
+      },
+      tenants: tenants.length,
+      caretakers: caretakers.length,
+      visits: pendingVisits,
+      relocations: pendingRelocations,
+      defaulters, // array instead of count
+      maintenance: {
+        pending: pendingMaint,
+        inProgress: inProgressMaint,
+        completed: completedMaint,
+        thisMonthCount: thisMonthMaint,
+        monthlyData,
+      },
+});
+
 
 
   } catch (err) {
