@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const houseSchema = new Schema({
   title: { type: String, required: true },
-  description: { type: String },
+  description: String,
   location: {
     county: String,
     town: String,
@@ -19,9 +19,12 @@ const houseSchema = new Schema({
     enum: ["vacant", "occupied", "reserved"],
     default: "vacant",
   },
-  postedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  caretakerId: { type: Schema.Types.ObjectId, ref: "User", default: null },
-  landlordId: { type: Schema.Types.ObjectId, ref: "User", default: null },
+
+  landlordId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Landlord
+  caretakerId: { type: Schema.Types.ObjectId, ref: "User", default: null }, // Assigned caretaker
+  tenants: [{ type: Schema.Types.ObjectId, ref: "User" }], // Optional direct tenant list
+
 }, { timestamps: true });
+
 
 module.exports = mongoose.model("House", houseSchema);

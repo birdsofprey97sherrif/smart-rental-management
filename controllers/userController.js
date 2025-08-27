@@ -106,16 +106,6 @@ exports.registerStaff = async (req, res) => {
   }
 };
 
-// Get Staff under a landlord
-exports.getStaffForLandlord = async (req, res) => {
-  try {
-    const staff = await User.find({ landlord: req.user.userId, role: { $in: ["caretaker", "admin"] } })
-      .select("-password -resetToken -resetTokenExpiry");
-    res.json(staff);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch staff" });
-  }
-};
 
 // Register Tenant (by Landlord)
 exports.registerTenant = async (req, res) => {
@@ -151,15 +141,43 @@ exports.registerTenant = async (req, res) => {
 };
 
 // Get Tenants under a landlord
+// Get all tenants under a landlord (through houses)
 exports.getTenantsForLandlord = async (req, res) => {
   try {
-    const tenants = await User.find({ landlord: req.user.userId, role: "tenant" })
-      .select("-password -resetToken -resetTokenExpiry");
+    // find all houses owned by this landlord and populate tenants
+    const houses = await House.find({ landlord: req.user.userId })
+      .populate("tenants", "-password -resetToken -resetTokenExpiry");
+
+    // flatten tenants across houses
+    const tenants = houses.flatMap(h => h.tenants);
+
     res.json(tenants);
   } catch (err) {
+    console.error("Error fetching tenants:", err);
     res.status(500).json({ message: "Failed to fetch tenants" });
   }
 };
 
+// Get all caretakers assigned to landlord's houses
+exports.getStaffForLandlord = async (req, res) => {
+  try {
+    // find houses owned by landlord and populate caretaker
+    const houses = await House.find({ landlord: req.user.userId })
+      .populate("caretaker", "-password -resetToken -resetTokenExpiry");
 
+    // extract caretakers (filter null if house has no caretaker yet)
+    const caretakers = houses
+      .map(h => h.caretaker)
+      .filter(c => c != null);
 
+    // remove duplicates in case multiple houses have same caretaker
+    const uniqueCaretakers = Array.from(
+      new Map(caretakers.map(c => [c._id.toString(), c])).values()
+    );
+
+    res.json(uniqueCaretakers);
+  } catch (err) {
+    console.error("Error fetching caretakers:", err);
+    res.status(500).json({ message: "Failed to fetch caretakers" });
+  }
+};

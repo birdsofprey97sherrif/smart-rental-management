@@ -82,3 +82,15 @@ exports.getActivityLogs = async (req, res) => {
     res.status(500).json({ message: "Server error fetching activity logs" });
   }
 };
+
+exports.getHousesManaged = async (req, res) => {
+  try {
+    // assuming caretaker is linked to houses via caretaker field
+    const houses = await House.find({ caretaker: req.user.userId }).populate("landlord", "name email");
+    res.json({ houses });
+  } catch (error) {
+    console.error("Error fetching caretaker houses:", error);
+    res.status(500).json({ message: "Server error while fetching houses" });
+  }
+};
+

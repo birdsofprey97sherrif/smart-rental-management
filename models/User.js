@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema(
@@ -15,28 +14,22 @@ const userSchema = new Schema(
     },
     photo: { type: String },
 
-    // 🔗 Link staff/tenants to a landlord
+    // 🔑 Keep landlord reference only if you want "staff created directly under landlord"
     landlord: { type: Schema.Types.ObjectId, ref: "User" },
 
-    // Optional tenant-specific fields
+    // Tenant-specific
     tenantDetails: {
-      nationalId: { type: String },
-      nextOfKin: { type: String },
-      currentHouseId: { type: Schema.Types.ObjectId, ref: "House" },
+      nationalId: String,
+      nextOfKin: String,
+      currentHouseId: { type: Schema.Types.ObjectId, ref: "House" }, // THIS is the key link
       leaseSigned: { type: Boolean, default: false },
       relocationServiceOpted: { type: Boolean, default: false },
     },
 
-    // Optional landlord-specific fields
-    landlordDetails: {
-      companyName: { type: String },
-      ownedHouseIds: [{ type: Schema.Types.ObjectId, ref: "House" }],
-    },
-
-    // Optional caretaker-specific fields
+    // Caretaker-specific (can also be derived from House)
     caretakerDetails: {
       housesManaged: [{ type: Schema.Types.ObjectId, ref: "House" }],
-      assignedBy: { type: Schema.Types.ObjectId, ref: "User" },
+      assignedBy: { type: Schema.Types.ObjectId, ref: "User" }, // landlord
     },
 
     resetToken: String,
@@ -53,9 +46,7 @@ const userSchema = new Schema(
       inApp: { type: Boolean, default: true },
     },
   },
-  {
-    timestamps: true, // automatically manage createdAt and updatedAt
-  }
+  { timestamps: true }
 );
 
 // ✅ Hash password before save

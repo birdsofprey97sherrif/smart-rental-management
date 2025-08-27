@@ -47,7 +47,7 @@ router.get(
 router.post(
   "/tenants/register",
   protectRoute,
-  allowRoles("landlord"),
+  allowRoles("landlord", "caretaker"),
   registerTenant
 );
 

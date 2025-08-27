@@ -10,4 +10,7 @@ router.get("/dashboard", protectRoute, caretakerDashboardController.getDashboard
 // Activity logs with filters & pagination
 router.get("/dashboard/activity", protectRoute, caretakerDashboardController.getActivityLogs);
 
+// Houses managed by the caretaker
+router.get("/houses-managed", protectRoute, caretakerDashboardController.getHousesManaged);
+
 module.exports = router;
