@@ -45,6 +45,7 @@ const userSchema = new Schema(
       sms: { type: Boolean, default: true },
       email: { type: Boolean, default: true },
       inApp: { type: Boolean, default: true },
+      isDeleted: { type: Boolean, default: false },
     },
   },
   { timestamps: true }

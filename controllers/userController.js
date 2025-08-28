@@ -145,7 +145,7 @@ exports.registerTenant = async (req, res) => {
 exports.getTenantsForLandlord = async (req, res) => {
   try {
     // find all houses owned by this landlord and populate tenants
-    const houses = await House.find({ landlord: req.user.userId })
+    const houses = await houses.find({ landlord: req.user.userId })
       .populate("tenants", "-password -resetToken -resetTokenExpiry");
 
     // flatten tenants across houses
@@ -162,7 +162,7 @@ exports.getTenantsForLandlord = async (req, res) => {
 exports.getStaffForLandlord = async (req, res) => {
   try {
     // find houses owned by landlord and populate caretaker
-    const houses = await House.find({ landlord: req.user.userId })
+    const houses = await houses.find({ landlord: req.user.userId })
       .populate("caretaker", "-password -resetToken -resetTokenExpiry");
 
     // extract caretakers (filter null if house has no caretaker yet)
