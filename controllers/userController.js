@@ -144,12 +144,24 @@ exports.registerTenant = async (req, res) => {
 // Get all tenants under a landlord (through houses)
 exports.getTenantsForLandlord = async (req, res) => {
   try {
-    // find all houses owned by this landlord and populate tenants
-    const houses = await houses.find({ landlord: req.user.userId })
-      .populate("tenants", "-password -resetToken -resetTokenExpiry");
+    const search = req.query.search || "";
 
-    // flatten tenants across houses
-    const tenants = houses.flatMap(h => h.tenants);
+    // 1. Find all tenant IDs for landlord’s houses
+    const housesData = await House.find({ landlord: req.user.userId }).select("tenants");
+    const tenantIds = housesData.flatMap(h => h.tenants);
+
+    // 2. Build query
+    const query = { _id: { $in: tenantIds } };
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 3. Query User collection
+    const tenants = await User.find(query, "-password -resetToken -resetTokenExpiry");
 
     res.json(tenants);
   } catch (err) {
@@ -157,6 +169,7 @@ exports.getTenantsForLandlord = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch tenants" });
   }
 };
+
 
 // Get all caretakers assigned to landlord's houses
 exports.getStaffForLandlord = async (req, res) => {

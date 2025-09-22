@@ -52,3 +52,4 @@ exports.isAdmin = (req, res, next) => {
 
 // Optional fallback: backward-compatible alias for protectRoute
 exports.isAuthenticated = exports.protectRoute;
+
