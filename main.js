@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
+// Install: npm install socket.io
+const socketIo = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 // Load environment variables
 dotenv.config();
@@ -120,8 +123,6 @@ process.on('SIGTERM', () => {
   });
 });
 
-// Install: npm install socket.io
-const socketIo = require('socket.io');
 
 // In main.js
 const server = require('http').createServer(app);
@@ -160,3 +161,31 @@ exports.sendNotification = async (userId, notification) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Security Middleware
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+
+app.use(helmet());
+app.use(mongoSanitize());
+app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }));
+// Add to main.js
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    scriptSrc: ["'self'"],
+    imgSrc: ["'self'", "data:", "https:"],
+  }
+}));
+
+app.use(helmet.hsts({
+  maxAge: 31536000,
+  includeSubDomains: true,
+  preload: true
+}));
+
+app.use(helmet.noSniff());
+app.use(helmet.frameguard({ action: 'deny' }));
+app.use(helmet.xssFilter());
