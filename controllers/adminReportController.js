@@ -1,3 +1,18 @@
+// ✅ Add all required imports at the top
+const RentPayment = require("../models/RentPayment");
+const RentalAgreement = require("../models/RentalAgreement");
+const House = require("../models/House");
+const User = require("../models/User");
+const VisitRequest = require("../models/VisitRequest");
+
+// ✅ Add helper function
+const getCurrentMonthRange = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  return { start, end };
+};
+
 exports.getHouseReport = async (req, res) => {
   try {
     const { houseId } = req.params;
@@ -14,9 +29,11 @@ exports.getHouseReport = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("getHouseReport error:", err);
     res.status(500).json({ message: "Failed to get house report" });
   }
 };
+
 exports.getTenantReport = async (req, res) => {
   try {
     const tenantId = req.user.userId;
@@ -33,9 +50,11 @@ exports.getTenantReport = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("getTenantReport error:", err);
     res.status(500).json({ message: "Failed to get tenant report" });
   }
 };
+
 exports.getLandlordReport = async (req, res) => {
   try {
     const landlordId = req.user.userId;
@@ -60,9 +79,11 @@ exports.getLandlordReport = async (req, res) => {
     res.json(reports);
 
   } catch (err) {
+    console.error("getLandlordReport error:", err);
     res.status(500).json({ message: "Failed to get landlord report" });
   }
 };
+
 exports.getVisitReport = async (req, res) => {
   try {
     const visits = await VisitRequest.find({ requestedTo: req.user.userId })
@@ -73,9 +94,11 @@ exports.getVisitReport = async (req, res) => {
     res.json(visits);
 
   } catch (err) {
+    console.error("getVisitReport error:", err);
     res.status(500).json({ message: "Failed to fetch visit requests" });
   }
 };
+
 exports.getEstateReport = async (req, res) => {
   try {
     const { estate } = req.params;
@@ -94,9 +117,11 @@ exports.getEstateReport = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("getEstateReport error:", err);
     res.status(500).json({ message: "Failed to get estate report" });
   }
 };
+
 exports.getDefaulterReport = async (req, res) => {
   try {
     const landlordId = req.user.userId;
@@ -110,7 +135,6 @@ exports.getDefaulterReport = async (req, res) => {
     const { start, end } = getCurrentMonthRange();
     const agreements = await RentalAgreement.find({ landlordId });
 
-    // Run DB queries in parallel for efficiency
     const defaulterPromises = agreements.map(async (ag) => {
       const payment = await RentPayment.findOne({
         agreementId: ag._id,

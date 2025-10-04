@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const House = require("../models/House"); // ✅ Add this import
 
 // Get Profile
 exports.getUserProfile = async (req, res) => {
@@ -87,9 +88,9 @@ exports.registerStaff = async (req, res) => {
       fullName,
       email,
       phone,
-      password, // make sure your User model hashes this in pre-save
+      password,
       role,
-      landlord: req.user.userId, // link staff to the landlord creating them
+      landlord: req.user.userId,
     });
 
     res.status(201).json({
@@ -102,10 +103,10 @@ exports.registerStaff = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Register staff error:", err);
     res.status(500).json({ message: "Failed to register staff" });
   }
 };
-
 
 // Register Tenant (by Landlord)
 exports.registerTenant = async (req, res) => {
@@ -123,7 +124,7 @@ exports.registerTenant = async (req, res) => {
       phone,
       password,
       role: "tenant",
-      landlord: req.user.userId, // tenant is linked to landlord
+      landlord: req.user.userId,
     });
 
     res.status(201).json({
@@ -136,21 +137,22 @@ exports.registerTenant = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Register tenant error:", err);
     res.status(500).json({ message: "Failed to register tenant" });
   }
 };
 
-// Get Tenants under a landlord
-// Get all tenants under a landlord (through houses)
+// ✅ FIXED: Get all tenants under a landlord (through houses)
 exports.getTenantsForLandlord = async (req, res) => {
   try {
+    const landlordId = req.user.userId;
     const search = req.query.search || "";
 
-    // 1. Find all tenant IDs for landlord’s houses
-    const housesData = await House.find({ landlord: req.user.userId }).select("tenants");
-    const tenantIds = housesData.flatMap(h => h.tenants);
+    // Find all houses owned by landlord
+    const houses = await House.find({ postedBy: landlordId }).select("tenants");
+    const tenantIds = houses.flatMap(h => h.tenants || []);
 
-    // 2. Build query
+    // Build query
     const query = { _id: { $in: tenantIds } };
     if (search) {
       query.$or = [
@@ -160,8 +162,7 @@ exports.getTenantsForLandlord = async (req, res) => {
       ];
     }
 
-    // 3. Query User collection
-    const tenants = await User.find(query, "-password -resetToken -resetTokenExpiry");
+    const tenants = await User.find(query).select("-password -resetToken -resetTokenExpiry");
 
     res.json(tenants);
   } catch (err) {
@@ -170,27 +171,68 @@ exports.getTenantsForLandlord = async (req, res) => {
   }
 };
 
-
-// Get all caretakers assigned to landlord's houses
+// ✅ FIXED: Get all staff (caretakers) for a landlord
 exports.getStaffForLandlord = async (req, res) => {
   try {
-    // find houses owned by landlord and populate caretaker
-    const houses = await houses.find({ landlord: req.user.userId })
-      .populate("caretaker", "-password -resetToken -resetTokenExpiry");
+    const landlordId = req.user.userId;
+    const search = req.query.search || "";
 
-    // extract caretakers (filter null if house has no caretaker yet)
+    // Option 1: Get caretakers assigned to landlord's houses
+    const houses = await House.find({ postedBy: landlordId })
+      .populate("caretakerId", "fullName email phone role");
+
     const caretakers = houses
-      .map(h => h.caretaker)
+      .map(h => h.caretakerId)
       .filter(c => c != null);
 
-    // remove duplicates in case multiple houses have same caretaker
+    // Remove duplicates
     const uniqueCaretakers = Array.from(
       new Map(caretakers.map(c => [c._id.toString(), c])).values()
     );
 
-    res.json(uniqueCaretakers);
+    // Apply search filter if provided
+    let filteredCaretakers = uniqueCaretakers;
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      filteredCaretakers = uniqueCaretakers.filter(c => 
+        regex.test(c.fullName) || 
+        regex.test(c.email) || 
+        regex.test(c.phone)
+      );
+    }
+
+    res.json({ staff: filteredCaretakers });
   } catch (err) {
-    console.error("Error fetching caretakers:", err);
-    res.status(500).json({ message: "Failed to fetch caretakers" });
+    console.error("Error fetching staff:", err);
+    res.status(500).json({ message: "Failed to fetch staff" });
+  }
+};
+
+// ✅ NEW: Get all staff created by this landlord (alternative approach)
+exports.getAllStaffForLandlord = async (req, res) => {
+  try {
+    const landlordId = req.user.userId;
+    const search = req.query.search || "";
+
+    // Find all staff (caretakers) linked to this landlord
+    const query = {
+      landlord: landlordId,
+      role: { $in: ["caretaker", "admin"] }
+    };
+
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const staff = await User.find(query).select("-password -resetToken -resetTokenExpiry");
+
+    res.json({ staff });
+  } catch (err) {
+    console.error("Error fetching all staff:", err);
+    res.status(500).json({ message: "Failed to fetch staff" });
   }
 };
