@@ -11,7 +11,7 @@ if (!fs.existsSync(uploadDir)) {
 // Removed duplicate multer configuration to avoid redeclaration errors.
 
 // Install: npm install multer sharp file-type
-const multer = require('multer');
+// const multer = require('multer');
 const sharp = require('sharp');
 const FileType = require('file-type');
 
