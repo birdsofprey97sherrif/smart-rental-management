@@ -164,8 +164,8 @@ server.listen(PORT, () => {
 
 // Security Middleware
 // const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
+// const rateLimit = require('express-rate-limit');
+// const mongoSanitize = require('express-mongo-sanitize');
 
 app.use(helmet());
 app.use(mongoSanitize());
