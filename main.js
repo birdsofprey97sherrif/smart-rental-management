@@ -21,7 +21,12 @@ app.use("/uploads", express.static("uploads"));
 
 // Security Middleware
 app.use(helmet());
-app.use(mongoSanitize());
+app.use(mongoSanitize({
+  replaceWith: '_',
+  onSanitize: ({ req, key }) => {
+    console.warn(`Sanitized key: ${key}`);
+  }
+}));
 
 // Content Security Policy
 app.use(helmet.contentSecurityPolicy({
