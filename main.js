@@ -11,6 +11,10 @@ const mongoSanitize = require('express-mongo-sanitize');
 // Load environment variables
 dotenv.config();
 
+// Check environment variables (optional but helpful)
+const checkEnvironment = require('./utils/envChecker');
+checkEnvironment();
+
 // Initialize app
 const app = express();
 
