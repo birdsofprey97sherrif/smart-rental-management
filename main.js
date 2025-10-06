@@ -2,9 +2,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
-// Install: npm install socket.io
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +19,30 @@ app.use(express.json());
 app.use(cors());
 app.use("/uploads", express.static("uploads"));
 
+// Security Middleware
+app.use(helmet());
+app.use(mongoSanitize());
+
+// Content Security Policy
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    styleSrc: ["'self'", "'unsafe-inline'"],
+    scriptSrc: ["'self'"],
+    imgSrc: ["'self'", "data:", "https:"],
+  }
+}));
+
+app.use(helmet.hsts({
+  maxAge: 31536000,
+  includeSubDomains: true,
+  preload: true
+}));
+
+app.use(helmet.noSniff());
+app.use(helmet.frameguard({ action: 'deny' }));
+app.use(helmet.xssFilter());
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
@@ -26,7 +52,7 @@ mongoose
     process.exit(1);
   });
 
-// ✅ Route Imports (All Controllers)
+// Route Imports
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const houseRoutes = require("./routes/houseRoutes");
@@ -41,22 +67,12 @@ const defaulterRoutes = require("./routes/defaulterRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const landlordDashboardRoutes = require("./routes/landlordDashboardRoutes");
 const caretakerDashboardRoutes = require("./routes/caretakerDashboardRoutes");
-const activityLogRoutes = require("./routes/activityLogRoutes"); // ✅ Added
-
-// ✅ Route Mounting
-app.get("/", (req, res) => res.send("🏠 Smart Rental Management API is running"));
-// Install: npm install express-rate-limit helmet express-mongo-sanitize
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const mongoSanitize = require('express-mongo-sanitize');
-
-// Add to main.js BEFORE routes
-app.use(helmet()); // Secure HTTP headers
+const activityLogRoutes = require("./routes/activityLogRoutes");
 
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
+  max: 5,
   message: 'Too many login attempts, please try again after 15 minutes'
 });
 
@@ -72,8 +88,9 @@ const apiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 
-// Prevent NoSQL injection
-app.use(mongoSanitize());
+// Root route
+app.get("/", (req, res) => res.send("🏠 Smart Rental Management API is running"));
+
 // Public Routes
 app.use("/api/auth", authRoutes);
 
@@ -91,9 +108,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/landlord", landlordDashboardRoutes);
 app.use("/api/caretaker", caretakerDashboardRoutes);
-app.use("/api/activity-logs", activityLogRoutes); // ✅ Added
+app.use("/api/activity-logs", activityLogRoutes);
 
-// ✅ Global Error Handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("❌ Error:", err.stack);
   res.status(err.status || 500).json({ 
@@ -107,27 +124,10 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Start Server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 API Base URL: http://localhost:${PORT}/api`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received, shutting down gracefully');
-  mongoose.connection.close(() => {
-    console.log('💤 MongoDB connection closed');
-    process.exit(0);
-  });
-});
-
-
-// In main.js
+// ✅ Create HTTP server ONCE with Socket.io
 const server = require('http').createServer(app);
 const io = socketIo(server, {
-  cors: { origin: process.env.FRONTEND_URL }
+  cors: { origin: process.env.FRONTEND_URL || '*' }
 });
 
 // Socket authentication
@@ -151,41 +151,37 @@ io.on('connection', (socket) => {
   });
 });
 
-// Send notification
+// Export sendNotification function
 exports.sendNotification = async (userId, notification) => {
+  const Notification = require('./models/Notification');
   await Notification.create({ userId, ...notification });
   io.to(`user_${userId}`).emit('notification', notification);
 };
 
-// Listen on server, not app
+// ✅ Start Server ONCE - Use server.listen() not app.listen()
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 API Base URL: http://localhost:${PORT}/api`);
 });
 
-// Security Middleware
-// const helmet = require('helmet');
-// const rateLimit = require('express-rate-limit');
-// const mongoSanitize = require('express-mongo-sanitize');
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    mongoose.connection.close(() => {
+      console.log('💤 MongoDB connection closed');
+      process.exit(0);
+    });
+  });
+});
 
-app.use(helmet());
-app.use(mongoSanitize());
-app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 5 }));
-// Add to main.js
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    scriptSrc: ["'self'"],
-    imgSrc: ["'self'", "data:", "https:"],
-  }
-}));
-
-app.use(helmet.hsts({
-  maxAge: 31536000,
-  includeSubDomains: true,
-  preload: true
-}));
-
-app.use(helmet.noSniff());
-app.use(helmet.frameguard({ action: 'deny' }));
-app.use(helmet.xssFilter());
+process.on('SIGINT', () => {
+  console.log('👋 SIGINT received, shutting down gracefully');
+  server.close(() => {
+    mongoose.connection.close(() => {
+      console.log('💤 MongoDB connection closed');
+      process.exit(0);
+    });
+  });
+});
