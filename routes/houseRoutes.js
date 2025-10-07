@@ -40,6 +40,9 @@ router.post(
   createHouse
 );
 
+router.get("/landlord/houses", protectRoute, isLandlord, getLandlordHouses);
+router.get("/landlord/stats", protectRoute, isLandlord, getHouseStats);
+
 // Update house
 router.put("/:id", protectRoute,isLandlord, updateHouse);
 

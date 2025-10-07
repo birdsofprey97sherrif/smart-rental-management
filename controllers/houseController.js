@@ -6,7 +6,7 @@ const User = require("../models/User");
 // =====================
 exports.getAllHouses = async (req, res) => {
   try {
-    const houses = await House.find().populate("postedBy", "fullName phone role");
+    const houses = await House.find().populate("landlordId", "fullName phone role");
     res.json(houses);
   } catch (err) {
     console.error(err);
@@ -19,7 +19,7 @@ exports.getAllHouses = async (req, res) => {
 // =====================
 exports.getHouseById = async (req, res) => {
   try {
-    const house = await House.findById(req.params.id).populate("postedBy", "fullName phone role");
+    const house = await House.findById(req.params.id).populate("landlordId", "fullName phone role");
     if (!house) return res.status(404).json({ message: "House not found" });
     res.json(house);
   } catch (err) {
@@ -42,22 +42,15 @@ exports.createHouse = async (req, res) => {
       rent,
       size,
       amenities,
-      postedBy: req.user.userId,
+      landlordId: req.user.userId, // ✅ FIXED: Use landlordId instead of postedBy
     });
 
     await house.save();
 
-    // Update owned houses for landlord
-    await User.findByIdAndUpdate(
-      req.user.userId,
-      { $addToSet: { ownedHouseIds: house._id } },
-      { new: true }
-    );
-
     res.status(201).json({ message: "House created successfully", house });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to create house" });
+    console.error("Create house error:", err);
+    res.status(500).json({ message: "Failed to create house", error: err.message });
   }
 };
 
@@ -66,8 +59,21 @@ exports.createHouse = async (req, res) => {
 // =====================
 exports.updateHouse = async (req, res) => {
   try {
-    const updated = await House.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "House not found" });
+    const houseId = req.params.id;
+    
+    // ✅ Check ownership before updating
+    const house = await House.findById(houseId);
+    if (!house) return res.status(404).json({ message: "House not found" });
+    
+    if (house.landlordId.toString() !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized to update this house" });
+    }
+
+    const updated = await House.findByIdAndUpdate(houseId, req.body, { 
+      new: true,
+      runValidators: true 
+    });
+    
     res.json({ message: "House updated", house: updated });
   } catch (err) {
     console.error(err);
@@ -80,9 +86,18 @@ exports.updateHouse = async (req, res) => {
 // =====================
 exports.deleteHouse = async (req, res) => {
   try {
-    const deleted = await House.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "House not found" });
-    res.json({ message: "House deleted" });
+    const houseId = req.params.id;
+    
+    // ✅ Check ownership before deleting
+    const house = await House.findById(houseId);
+    if (!house) return res.status(404).json({ message: "House not found" });
+    
+    if (house.landlordId.toString() !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized to delete this house" });
+    }
+
+    await House.findByIdAndDelete(houseId);
+    res.json({ message: "House deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to delete house" });
@@ -100,7 +115,8 @@ exports.assignCaretaker = async (req, res) => {
     const house = await House.findById(houseId);
     if (!house) return res.status(404).json({ message: "House not found" });
 
-    if (house.postedBy.toString() !== req.user.userId) {
+    // ✅ FIXED: Use landlordId instead of postedBy
+    if (house.landlordId.toString() !== req.user.userId) {
       return res.status(403).json({ message: "Only the owner can assign a caretaker" });
     }
 
@@ -112,10 +128,15 @@ exports.assignCaretaker = async (req, res) => {
     house.caretakerId = caretakerId;
     await house.save();
 
-    if (!caretaker.caretakerDetails) caretaker.caretakerDetails = { housesManaged: [] };
+    // ✅ Update caretaker's managed houses
+    if (!caretaker.caretakerDetails) {
+      caretaker.caretakerDetails = { housesManaged: [] };
+    }
+    
     const alreadyAssigned = caretaker.caretakerDetails.housesManaged.some(
       id => id.toString() === houseId
     );
+    
     if (!alreadyAssigned) {
       caretaker.caretakerDetails.housesManaged.push(houseId);
       await caretaker.save();
@@ -134,16 +155,25 @@ exports.assignCaretaker = async (req, res) => {
 exports.searchHouses = async (req, res) => {
   try {
     const { location, minRent, maxRent, size } = req.query;
-    const query = {};
-    if (location) query.location = { $regex: location, $options: "i" };
+    const query = { landlordId: req.user.userId }; // ✅ Only search landlord's houses
+    
+    if (location) {
+      query.$or = [
+        { "location.county": { $regex: location, $options: "i" } },
+        { "location.town": { $regex: location, $options: "i" } },
+        { "location.street": { $regex: location, $options: "i" } }
+      ];
+    }
+    
     if (size) query.size = size;
+    
     if (minRent || maxRent) {
       query.rent = {};
       if (minRent) query.rent.$gte = Number(minRent);
       if (maxRent) query.rent.$lte = Number(maxRent);
     }
 
-    const houses = await House.find(query);
+    const houses = await House.find(query).populate("landlordId", "fullName phone");
     res.json({ count: houses.length, houses });
   } catch (err) {
     console.error(err);
@@ -173,11 +203,16 @@ exports.uploadHouse = async (req, res) => {
       photoPaths = Array.isArray(photos) ? photos : [photos];
     }
 
+    // ✅ Parse JSON strings if needed
     if (typeof location === "string") {
-      try { location = JSON.parse(location); } catch {}
+      try { location = JSON.parse(location); } catch (e) {
+        console.error("Location parse error:", e);
+      }
     }
     if (typeof amenities === "string") {
-      try { amenities = JSON.parse(amenities); } catch {}
+      try { amenities = JSON.parse(amenities); } catch (e) {
+        console.error("Amenities parse error:", e);
+      }
     }
 
     const house = new House({
@@ -188,21 +223,15 @@ exports.uploadHouse = async (req, res) => {
       size,
       amenities,
       photos: photoPaths,
-      postedBy: req.user.userId,
+      landlordId: req.user.userId, // ✅ FIXED: Use landlordId
     });
 
     await house.save();
 
-    await User.findByIdAndUpdate(
-      req.user.userId,
-      { $addToSet: { ownedHouseIds: house._id } },
-      { new: true }
-    );
-
     res.status(201).json({ message: "House uploaded successfully", house });
   } catch (err) {
     console.error("Error uploading house:", err);
-    res.status(500).json({ message: "Error uploading house" });
+    res.status(500).json({ message: "Error uploading house", error: err.message });
   }
 };
 
@@ -211,10 +240,60 @@ exports.uploadHouse = async (req, res) => {
 // =====================
 exports.getVacantHouses = async (req, res) => {
   try {
-    const houses = await House.find({ status: "vacant" }).populate("postedBy", "fullName phone role");
+    const houses = await House.find({ 
+      status: "vacant",
+      landlordId: req.user.userId // ✅ Only landlord's vacant houses
+    }).populate("landlordId", "fullName phone role");
+    
     res.json(houses);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Could not retrieve vacant houses" });
+  }
+};
+
+// =====================
+// ✅ NEW: Get Landlord's Houses Only
+// =====================
+exports.getLandlordHouses = async (req, res) => {
+  try {
+    const houses = await House.find({ landlordId: req.user.userId })
+      .populate("landlordId", "fullName phone role")
+      .populate("caretakerId", "fullName phone")
+      .populate("tenants", "fullName email phone")
+      .sort({ createdAt: -1 });
+    
+    res.json({ 
+      count: houses.length, 
+      houses 
+    });
+  } catch (err) {
+    console.error("Error fetching landlord houses:", err);
+    res.status(500).json({ message: "Failed to fetch houses" });
+  }
+};
+
+// =====================
+// ✅ NEW: Get Houses Statistics
+// =====================
+exports.getHouseStats = async (req, res) => {
+  try {
+    const landlordId = req.user.userId;
+    
+    const totalHouses = await House.countDocuments({ landlordId });
+    const occupied = await House.countDocuments({ landlordId, status: "occupied" });
+    const vacant = await House.countDocuments({ landlordId, status: "vacant" });
+    const reserved = await House.countDocuments({ landlordId, status: "reserved" });
+    
+    res.json({
+      total: totalHouses,
+      occupied,
+      vacant,
+      reserved,
+      occupancyRate: totalHouses > 0 ? ((occupied / totalHouses) * 100).toFixed(2) : 0
+    });
+  } catch (err) {
+    console.error("Error fetching house stats:", err);
+    res.status(500).json({ message: "Failed to fetch statistics" });
   }
 };
