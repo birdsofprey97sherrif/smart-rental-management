@@ -11,6 +11,8 @@ const {
   getVacantHouses,
   searchHouses,
   uploadHouse,
+  getLandlordHouses, // ✅ NEW: Add this
+  getHouseStats, // ✅ NEW: Add this
 } = require("../controllers/houseController");
 
 const { protectRoute } = require("../middlewares/authMiddleware");
@@ -18,17 +20,21 @@ const { isLandlord } = require("../middlewares/roleMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 const { resizeHouseImage } = require("../middlewares/imageUpload");
 
+// ✅ NEW: Landlord-specific routes (MUST be before :id route)
+router.get("/my", protectRoute, isLandlord, getLandlordHouses);
+router.get("/stats", protectRoute, isLandlord, getHouseStats);
+
 // Search houses (landlord only) -- Place BEFORE :id route
 router.get("/search", protectRoute, isLandlord, searchHouses);
+
+// Get vacant houses
+router.get("/vacant", protectRoute, getVacantHouses);
 
 // Get all houses
 router.get("/", getAllHouses);
 
 // Get house by ID
 router.get("/:id", getHouseById);
-
-// Get vacant houses
-router.get("/vacant", getVacantHouses);
 
 // Create house (single image, landlord only)
 router.post(
@@ -40,17 +46,14 @@ router.post(
   createHouse
 );
 
-router.get("/landlord/houses", protectRoute, isLandlord, getLandlordHouses);
-router.get("/landlord/stats", protectRoute, isLandlord, getHouseStats);
-
 // Update house
-router.put("/:id", protectRoute,isLandlord, updateHouse);
+router.put("/:id", protectRoute, isLandlord, updateHouse);
 
 // Delete house
-router.delete("/:id", protectRoute,isLandlord,  deleteHouse);
+router.delete("/:id", protectRoute, isLandlord, deleteHouse);
 
 // Assign caretaker to house
-router.put("/:houseId/assign-caretaker", protectRoute,isLandlord, assignCaretaker);
+router.put("/:houseId/assign-caretaker", protectRoute, isLandlord, assignCaretaker);
 
 // Multiple image upload (e.g. up to 5 images)
 router.post(
