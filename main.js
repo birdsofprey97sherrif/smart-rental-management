@@ -78,24 +78,57 @@ const landlordDashboardRoutes = require("./routes/landlordDashboardRoutes");
 const caretakerDashboardRoutes = require("./routes/caretakerDashboardRoutes");
 const activityLogRoutes = require("./routes/activityLogRoutes");
 
-// Rate limiting for auth routes
+// ============================================
+// COPY THIS SECTION ONLY - Replace lines ~30-50 in main.js
+// ============================================
+
+// ✅ IMPROVED RATE LIMITING
+// Rate limiting for auth routes - More lenient
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
-  message: 'Too many login attempts, please try again after 15 minutes'
+  max: 20, // ✅ Increased from 5 to 20
+  message: 'Too many login attempts, please try again after 15 minutes',
+  skipSuccessfulRequests: true, // ✅ Don't count successful logins
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
+// General API rate limiting - More lenient
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // ✅ Increased from 100 to 500
+  message: 'Too many requests, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Dashboard-specific limits (for auto-refresh endpoints)
+const dashboardLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute (1 per second)
+  message: 'Dashboard refresh rate exceeded',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ✅ Apply rate limiters
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
-// General API rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests, please try again later'
-});
+// ✅ Dashboard endpoints get special treatment
+app.use('/api/landlord/dashboard', dashboardLimiter);
+app.use('/api/landlord/activity', dashboardLimiter);
+app.use('/api/caretaker/dashboard', dashboardLimiter);
+app.use('/api/caretaker/dashboard/activity', dashboardLimiter);
 
+// ✅ General API limit (should be AFTER specific routes)
 app.use('/api/', apiLimiter);
+
+// ============================================
+// END OF RATE LIMITING SECTION
+// ============================================
+
+//app.use('/api/', apiLimiter);
 
 // Root route
 app.get("/", (req, res) => res.send("🏠 Smart Rental Management API is running"));
