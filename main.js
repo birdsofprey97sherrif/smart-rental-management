@@ -120,6 +120,18 @@ app.use('/api/landlord/dashboard', dashboardLimiter);
 app.use('/api/landlord/activity', dashboardLimiter);
 app.use('/api/caretaker/dashboard', dashboardLimiter);
 app.use('/api/caretaker/dashboard/activity', dashboardLimiter);
+app.use('/api/tenant/dashboard', dashboardLimiter);
+app.use('/api/tenant/dashboard/activity', dashboardLimiter);
+app.use('/api/admin/dashboard', dashboardLimiter);
+
+// ✅ Dashboard-specific limits (for auto-refresh endpoints)
+app.use('/api/landlord/dashboard', dashboardLimiter);
+app.use('/api/landlord/dashboard/activity', dashboardLimiter);
+app.use('/api/caretaker/dashboard', dashboardLimiter);
+app.use('/api/caretaker/dashboard/activity', dashboardLimiter);
+app.use('/api/tenant/dashboard', dashboardLimiter);
+app.use('/api/tenant/dashboard/activity', dashboardLimiter);
+app.use('/api/admin/dashboard', dashboardLimiter);
 
 // ✅ General API limit (should be AFTER specific routes)
 app.use('/api/', apiLimiter);
